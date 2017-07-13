@@ -555,6 +555,7 @@ function check_http(request, response, callback) {
                     }
                 }
                 else {
+                    ty = '99';
                     for (var ty_idx in responder.typeRsrc) {
                         if (responder.typeRsrc.hasOwnProperty(ty_idx)) {
                             if ((ty_idx == 4) && (responder.typeRsrc[ty_idx] == Object.keys(body_Obj)[0])) {
@@ -574,6 +575,12 @@ function check_http(request, response, callback) {
                                 }
                             }
                         }
+                    }
+
+                    if (ty == '99') {
+                        responder.error_result(request, response, 400, 4000, 'resource type in body is not match to target resource');
+                        callback('0', body_Obj);
+                        return '0';
                     }
                 }
 

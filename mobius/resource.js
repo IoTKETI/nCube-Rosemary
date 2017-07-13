@@ -30,7 +30,7 @@ var cnt = require('./cnt');
 var cin = require('./cin');
 var ae = require('./ae');
 var sub = require('./sub');
-var sd = require('./sd');
+var smd = require('./smd');
 var ts = require('./ts');
 var tsi = require('./tsi');
 var lcp = require('./lcp');
@@ -730,7 +730,7 @@ function create_action(request, response, ty, resource_Obj, callback) {
                 db_sql.insert_sd(resource_Obj[rootnm].ty, resource_Obj[rootnm].ri, resource_Obj[rootnm].rn, resource_Obj[rootnm].pi, resource_Obj[rootnm].ct,
                     resource_Obj[rootnm].lt, resource_Obj[rootnm].et, JSON.stringify(resource_Obj[rootnm].acpi), JSON.stringify(resource_Obj[rootnm].lbl), JSON.stringify(resource_Obj[rootnm].at),
                     JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].st, resource_Obj[rootnm].mni, resource_Obj[rootnm].cs, resource_Obj[rootnm].cnf, resource_Obj[rootnm].sri, resource_Obj[rootnm].spi,
-                    resource_Obj[rootnm].cr, resource_Obj[rootnm].dspt, resource_Obj[rootnm].or, function (err, results) {
+                    resource_Obj[rootnm].cr, resource_Obj[rootnm].dcrp, resource_Obj[rootnm].or, function (err, results) {
                         if (!err) {
                             callback('1', resource_Obj);
                         }
@@ -965,7 +965,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
                         });
                         break;
                     case '24':
-                        sd.build_sd(request, response, resource_Obj, body_Obj, function(rsc, resource_Obj) {
+                        smd.build_sd(request, response, resource_Obj, body_Obj, function(rsc, resource_Obj) {
                             callback(rsc, resource_Obj);
                         });
                         break;
@@ -1770,7 +1770,7 @@ function update_action( request, response, ty, resource_Obj, callback) {
     else if(ty == '24') {
         db_sql.update_sd(resource_Obj[rootnm].lt, JSON.stringify(resource_Obj[rootnm].acpi), resource_Obj[rootnm].et, resource_Obj[rootnm].st, JSON.stringify(resource_Obj[rootnm].lbl),
             JSON.stringify(resource_Obj[rootnm].at), JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].mni, resource_Obj[rootnm].ri,
-            resource_Obj[rootnm].dspt, resource_Obj[rootnm].or, function (err, results) {
+            resource_Obj[rootnm].dcrp, resource_Obj[rootnm].or, function (err, results) {
                 if (!err) {
                     callback('1', resource_Obj);
                 }
@@ -1876,7 +1876,7 @@ function update_resource(request, response, ty, body_Obj, resource_Obj, callback
             });
             break;
         case '24':
-            sd.modify_sd(request, response, resource_Obj, body_Obj, function(rsc, resource_Obj) {
+            smd.modify_sd(request, response, resource_Obj, body_Obj, function(rsc, resource_Obj) {
                 callback(rsc, resource_Obj);
             }); break;
         case '29':

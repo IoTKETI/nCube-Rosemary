@@ -220,7 +220,7 @@ const attrLname = {
     "aai":  "allowedApp-IDs",
     "aae":  "allowedAEs",
     "rsp": "responsePrimitive",
-    "dspt": "descriptor",
+    "dcrp": "descriptor",
     "pei":"periodicInterval",
     "mdd":"missingDataDetect",
     "mdn":"missingDataMaxNr",
@@ -509,7 +509,7 @@ const attrSname = {
     "allowedAEs"                   :"aae",
     "singleNotification":  "sgn",
     "responsePrimitive":"rsp",
-    "descriptor":"dspt",
+    "descriptor":"dcrp",
     "periodicInterval":"pei",
     "missingDataDetect":"mdd",
     "missingDataMaxNr":"mdn",
@@ -611,7 +611,7 @@ const rceLname = {
     "ts" : "timeSeries",
     "tsi": "timeSeriesInstance",
     "uril" :"URIList",
-    "sd":"semanticDescriptor",
+    "smd":"semanticDescriptor",
     "rsp": "responsePrimitive",
     "acp":"accessControlPolicy",
     "acpA":"accessControlPolicyAnnc",
@@ -690,7 +690,7 @@ const rceSname = {
     "timeSeries"        : "ts",
     "timeSeriesInstance": "tsi",
     "URIList"            :"uril",
-    "semanticDescriptor":"sd",
+    "semanticDescriptor":"smd",
     "responsePrimitive":"rsp",
     "accessControlPolicy":"acp",
     "accessControlPolicyAnnc":"acpA",
@@ -771,7 +771,7 @@ const typeRsrc = {
     "16": "csr",
     "17": "req",
     "23": "sub",
-    "24": "sd",
+    "24": "smd",
     "27": "mms",
     "29": "ts",
     "30": "tsi",
@@ -802,7 +802,8 @@ function typeCheckAction(index1, body_Obj) {
 
             else if (index2 == 'cst' || index2 == 'los' || index2 == 'mt' || index2 == 'csy' || index2 == 'nct' ||
                 index2 == 'cs' || index2 == 'st' || index2 == 'ty' || index2 == 'cbs' || index2 == 'cni' || index2 == 'mni' ||
-                index2 == 'cnm' || index2 == 'mia' || index2 == 'mbs' || index2 == 'cnf' || index2 == 'mgd' || index2 == 'btl' || index2 == 'bts') {
+                index2 == 'cnm' || index2 == 'mia' || index2 == 'mbs' || index2 == 'cnf' || index2 == 'mgd' || index2 == 'btl' || index2 == 'bts' ||
+                index2 == 'mdn' || index2 == 'mdc' || index2 == 'mdt' || index2 == 'pei') {
 
                 if ((index1 == 'm2m:cin' || index1 == 'm2m:nod' || index1 == 'm2m:ae' || index1 == 'm2m:sub' || index1 == 'm2m:acp' || index1 == 'm2m:csr' || index1 == 'm2m:grp'
                     || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' || index1 == 'm2m:rbo') && index2 == 'mni') {
@@ -867,7 +868,8 @@ function typeCheckAction(index1, body_Obj) {
                     }
                 }
             }
-            else if (index2 == 'rr' || index2 == 'mtv' || index2 == 'ud' || index2 == 'att' || index2 == 'cus' || index2 == 'ena' || index2 == 'dis' || index2 == 'rbo' || index2 == 'far') {
+            else if (index2 == 'rr' || index2 == 'mtv' || index2 == 'ud' || index2 == 'att' || index2 == 'cus' || index2 == 'ena' || index2 == 'dis' || index2 == 'rbo' ||
+                index2 == 'far' || index2 == 'mdd' ) {
                 body_Obj[index2] = ((body_Obj[index2] == 'true') || ((body_Obj[index2] == true)));
             }
             else if (index2 == 'sri') {

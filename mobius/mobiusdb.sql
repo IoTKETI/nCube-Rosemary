@@ -327,16 +327,16 @@ CREATE TABLE `req` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `sd`
+-- Table structure for table `smd`
 --
 
-DROP TABLE IF EXISTS `sd`;
+DROP TABLE IF EXISTS `smd`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `sd` (
+CREATE TABLE `smd` (
   `ri` varchar(200) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
   `cr` varchar(45) DEFAULT NULL,
-  `dspt` longtext,
+  `dcrp` longtext,
   `or` mediumtext,
   PRIMARY KEY (`ri`),
   UNIQUE KEY `ri_UNIQUE` (`ri`),

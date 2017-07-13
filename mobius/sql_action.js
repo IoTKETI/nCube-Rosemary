@@ -496,13 +496,13 @@ exports.insert_sub = function(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st,
     });
 };
 
-exports.insert_sd = function(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, mni, cs, cnf, sri, spi, cr, dspt, or, callback) {
+exports.insert_sd = function(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, mni, cs, cnf, sri, spi, cr, dcrp, or, callback) {
     console.time('insert_sd ' + ri);
     _this.insert_lookup(ty, ri, rn, pi, ct, lt, et, acpi, lbl, at, aa, st, mni, cs, cnf, sri, spi, function (err, results) {
         if(!err) {
-            var sql = util.format('insert into sd (ri, cr, dspt, sd.or) ' +
+            var sql = util.format('insert into smd (ri, cr, dcrp, smd.or) ' +
                 'value (\'%s\', \'%s\', \'%s\', \'%s\')',
-                ri, cr, dspt, or);
+                ri, cr, dcrp, or);
             db.getResult(sql, '', function (err, results) {
                 if(!err) {
                     console.timeEnd('insert_sd ' + ri);
@@ -836,18 +836,15 @@ exports.search_lookup = function (ri, query, cur_lim, pi_list, pi_index, found_O
     //console.log(cur_ct);
     //console.log(bef_ct);
 
-
     for(var idx = 0; idx < 8; idx++) {
         if (pi_index < pi_list.length) {
             cur_pi.push(pi_list[pi_index++]);
         }
     }
 
-
-    console.log(loop_cnt + ' - ' + cur_lim + ' - ' + bef_ct + ' - ' + cur_pi);
+    //console.log(loop_cnt + ' - ' + cur_lim + ' - ' + bef_ct + ' - ' + cur_pi);
 
     var sql = build_discovery_sql(ri, query, cur_lim, cur_pi, bef_ct);
-    //console.log(loop_cnt + ' - ' + bef_ct + ' - ' + cur_pi);
     db.getResult(sql, '', function (err, search_Obj) {
         if(!err) {
             //make_json_arraytype(search_Obj);
@@ -1445,14 +1442,14 @@ exports.update_sub = function (lt, acpi, et, st, lbl, at, aa, mni, ri, enc, exc,
     });
 };
 
-exports.update_sd = function (lt, acpi, et, st, lbl, at, aa, mni, ri, dspt, or, callback) {
+exports.update_sd = function (lt, acpi, et, st, lbl, at, aa, mni, ri, dcrp, or, callback) {
     console.time('update_sd ' + ri);
     var sql1 = util.format('update lookup set lt = \'%s\', acpi = \'%s\', et = \'%s\', st = \'%s\', lbl = \'%s\', at = \'%s\', aa = \'%s\', mni = \'%s\' where ri = \'%s\'',
         lt, acpi, et, st, lbl, at, aa, mni, ri);
     db.getResult(sql1, '', function (err, results) {
         if (!err) {
-            var sql2 = util.format('update sd set dspt = \'%s\', sd.or = \'%s\' where ri = \'%s\'',
-                dspt, or, ri);
+            var sql2 = util.format('update smd set dcrp = \'%s\', smd.or = \'%s\' where ri = \'%s\'',
+                dcrp, or, ri);
             db.getResult(sql2, '', function (err, results) {
                 if (!err) {
                     console.timeEnd('update_sd ' + ri);

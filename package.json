@@ -1,8 +1,9 @@
 {
-  "name": "mobius-yt",
-  "version": "2.2.21",
+  "name": "Mobius",
+  "version": "2.4.2",
   "dependencies": {
     "body-parser": "^1.17.0",
+    "cbor": "^3.0.0",
     "coap": "^0.21.0",
     "crypto": "0.0.3",
     "events": "^1.1.1",
