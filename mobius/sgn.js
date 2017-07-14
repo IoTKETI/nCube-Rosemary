@@ -47,12 +47,16 @@ function make_xml_noti_message(pc, xm2mri) {
                         if(prop2 == 'rn') {
                             noti_message['m2m:rqp'].pc.sgn.nev.rep[prop]['@'] = {rn : noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2]};
                             delete noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2];
+                            break;
                         }
-                        for(var prop3 in noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2]) {
-                            if (noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2].hasOwnProperty(prop3)) {
-                                if(prop3 == 'rn') {
-                                    noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2]['@'] = {rn : noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2][prop3]};
-                                    delete noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2][prop3];
+                        else {
+                            for (var prop3 in noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2]) {
+                                if (noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2].hasOwnProperty(prop3)) {
+                                    if (prop3 == 'rn') {
+                                        noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2]['@'] = {rn: noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2][prop3]};
+                                        delete noti_message['m2m:rqp'].pc.sgn.nev.rep[prop][prop2][prop3];
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -66,7 +70,7 @@ function make_xml_noti_message(pc, xm2mri) {
             "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
         };
 
-        return js2xmlparser("m2m:rqp", noti_message['m2m:rqp']);
+        return js2xmlparser.parse("m2m:rqp", noti_message['m2m:rqp']);
     }
     catch (e) {
         console.log('[make_xml_noti_message] xml parsing error');
@@ -188,7 +192,7 @@ function sgn_action(rootnm, check_value, results_ss, noti_Obj, sub_bodytype) {
                                 "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
                             };
 
-                            var bodyString = js2xmlparser('m2m:'+Object.keys(node)[0], node[Object.keys(node)[0]]);
+                            var bodyString = js2xmlparser.parse('m2m:'+Object.keys(node)[0], node[Object.keys(node)[0]]);
                             request_noti_http(nu, results_ss.ri, bodyString, sub_bodytype, xm2mri);
                         }
                         else if (sub_nu.protocol == 'coap:') {
@@ -197,7 +201,7 @@ function sgn_action(rootnm, check_value, results_ss, noti_Obj, sub_bodytype) {
                                 "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance"
                             };
 
-                            bodyString = js2xmlparser('m2m:'+Object.keys(node)[0], node[Object.keys(node)[0]]);
+                            bodyString = js2xmlparser.parse('m2m:'+Object.keys(node)[0], node[Object.keys(node)[0]]);
                             request_noti_coap(nu, results_ss.ri, bodyString, sub_bodytype, xm2mri);
                         }
                         else if (sub_nu.protocol == 'ws:') {
