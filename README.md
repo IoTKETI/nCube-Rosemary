@@ -30,6 +30,10 @@ When installation of MySQL Server finish. It also needs DB Schema for storing on
 ```
 [nCube-Rosemary home]/mobius/mobiusdb.sql
 ```
+- Run Mosquitto MQTT Broker<br/>
+```
+mosquitto -v
+```
 - Open the nCube-Rosemary source home directory.
 - Install dependency libraries with command like below.
 ```
