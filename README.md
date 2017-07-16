@@ -1,7 +1,7 @@
 # nCube-Rosemary
 ## Introduction
 The nCube-Rosemary is defined middle server in oneM2M standard, and active as device gateway like local server. As a separate device it can storage resources also it can take remoteCSE as child resource. It plays the role of MN-CSE in the oneM2M standard. nCube-Rosemary is a kind of nCube but it can active like server because it contains CSE. So the nCube-Rosemary is same to Mobius on software level and they share the same type of oneM2M resource all most have same function. We can only use hardware environment to distinguish them.
-## Connectivity stucture
+## System stucture
 <div align="center">
 <img src="https://user-images.githubusercontent.com/29790334/28234222-3ef7135e-6938-11e7-9f0e-2d6d73a2047f.png" width="600"/>
 </div>
