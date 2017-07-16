@@ -39,7 +39,21 @@ mosquitto -v
 ```
 npm install
 ```
-- Modity configuration file "conf_mn.json"
+- Modify configuration file "conf_mn.json"
+```
+{
+  "parent": {
+    "cbname": "Mobius",             //CSEbase name
+    "cbcseid": "/Mobius",           //CSEbase ID
+    "cbhost": "203.253.128.161",    //CSEbase host IP
+    "cbhostport": "7579",           //CSEbase http hosting port
+    "cbprotocol": "http",           //CSEbase communication protocol
+    "mqttbroker": "203.253.128.161" //MQTT Broker IP 
+  },
+  "csebaseport": "7599",            //MN-CSE HTTP hosting IP
+  "dbpass": "dksklfdug2"            //Local MySQL root password
+}
+```
 <div align="left">
 <img src="https://user-images.githubusercontent.com/29790334/28210356-ea6875aa-68d1-11e7-9023-00747a2d8597.png" width="300"/>
 </div><br/>
