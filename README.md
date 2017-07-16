@@ -54,9 +54,6 @@ npm install
   "dbpass": "dksklfdug2"            //Local MySQL root password
 }
 ```
-<div align="left">
-<img src="https://user-images.githubusercontent.com/29790334/28210356-ea6875aa-68d1-11e7-9023-00747a2d8597.png" width="300"/>
-</div><br/>
 
 ## Running
 Use node.js application execution command to run the Rosemary
