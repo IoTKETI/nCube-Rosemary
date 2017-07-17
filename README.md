@@ -1,13 +1,15 @@
 # nCube-Rosemary
 ## Introduction
-The nCube-Rosemary is defined middle server in oneM2M standard, and active as device gateway like local server. As a separate device it can storage resources also it can take remoteCSE as child resource. It plays the role of MN-CSE in the oneM2M standard. nCube-Rosemary is a kind of nCube but it can active like server because it contains CSE. So the nCube-Rosemary is same to Mobius on software level and they share the same type of oneM2M resource all most have same function. We can only use hardware environment to distinguish them.
+The &Cube-Rosemary is the open source IoT gateway platform based on the oneM2M (http://www.oneM2M.org) standard. As one of the oneM2M platforms, &Cube-Rosemary provides common services functions to oneM2M applications and other oneM2M devices. So the &Cube-Rosemary can be used to provide proximity based IoT services. As defined in the specifications, &Cube-Rosemary as MN-CSE also provides interworking functionalities via IPE (Interworking Proxy Entity).
+
 ## System stucture
+&Cube-Rosemary implementation of oneM2M MN-CSE which interconnects ASN-CSE or ADN-AE to IN-CSE.
 <div align="center">
 <img src="https://user-images.githubusercontent.com/29790334/28234222-3ef7135e-6938-11e7-9f0e-2d6d73a2047f.png" width="600"/>
 </div>
 
 ## Installation
-The nCube-Rosemary was developed with javascript of node.js and it also uses the MySQL to store data.
+The &Cube-Rosemary is based on Node.js framework and uses MySQL for database.
 <div align="center">
 <img src="https://user-images.githubusercontent.com/29790334/28209096-00fdcaa0-68cc-11e7-9d15-0a7dde6accb7.png" width="400"/>
 </div><br/>
@@ -22,24 +24,24 @@ Node.js® is a JavaScript runtime built on Chrome's V8 JavaScript engine. Node.j
 Eclipse Mosquitto™ is an open source (EPL/EDL licensed) message broker that implements the MQTT protocol versions 3.1 and 3.1.1. MQTT provides a lightweight method of carrying out messaging using a publish/subscribe model. This makes it suitable for "Internet of Things" messaging such as with low power sensors or mobile devices such as phones, embedded computers or microcontrollers like the Arduino.
 
 - [nCube-Rosemary](https://github.com/IoTKETI/nCube-Rosemary/archive/master.zip)<br/>
-nCube-Rosemary is application base the node.js javascript. So we don't need to compile and install it before using.
+&Cube-Rosemary source codes are written in javascript. So they don't need any compilation or installation before running.
 
 ## Configuration
 - Import SQL script<br/>
-When installation of MySQL Server finish. It also needs DB Schema for storing oneM2M resource in nCube-Rosemary. You can find this file in the nCube-Rosemary's source directory as below.
+After installation of MySQL server, you need the DB Schema for storing oneM2M resources in &Cube-Rosemary. You can find this file in the foloowing &Cube-Rosemary source directory.
 ```
 [nCube-Rosemary home]/mobius/mobiusdb.sql
 ```
-- Run Mosquitto MQTT Broker<br/>
+- Run Mosquitto MQTT broker<br/>
 ```
 mosquitto -v
 ```
-- Open the nCube-Rosemary source home directory.
-- Install dependency libraries with command like below.
+- Open the &Cube-Rosemary source home directory
+- Install dependent libraries as below
 ```
 npm install
 ```
-- Modify configuration file "conf_mn.json"
+- Modify the configuration file "conf_mn.json" per your setting
 ```
 {
   "parent": {
@@ -55,8 +57,8 @@ npm install
 }
 ```
 
-## Running
-Use node.js application execution command to run the Rosemary
+## Run
+Use node.js application execution command as below
 ```
 node rosemary.js
 ```
@@ -66,7 +68,7 @@ node rosemary.js
 </div><br/>
 
 ## Dependency Libraries
-These is dependency libraries for nCube-Rosemary 
+This is the list of library dependencies for &Cube-Rosemary 
 - body-parser
 - cbor
 - coap
@@ -91,7 +93,7 @@ These is dependency libraries for nCube-Rosemary
 - xmlbuilder
 
 ## Document
-If you want more detail please dowload the full [installation guide document](https://github.com/IoTKETI/nCube-Rosemary/raw/master/doc/Installation%20Guide_Rosemary_v2.0.0_KR.docx).
+If you want more details please dowload the full [installation guide document](https://github.com/IoTKETI/nCube-Rosemary/raw/master/doc/Installation%20Guide_Rosemary_v2.0.0_KR.docx).
 
 # Author
 Il Yeup (iyahn@keti.re.kr; ryeubi@gmail.com)
