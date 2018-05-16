@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015, OCEAN
+ * Copyright (c) 2018, KETI
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -10,7 +10,7 @@
 
 /**
  * @file
- * @copyright KETI Korea 2015, OCEAN
+ * @copyright KETI Korea 2018, KETI
  * @author Il Yeup Ahn [iyahn@keti.re.kr]
  */
 
@@ -30,7 +30,7 @@ var _this = this;
 
 
 
-const attrLname = {
+var attrLname = {
     "acpi": "accessControlPolicyIDs",
     "aa":   "announcedAttribute",
     "at":   "announceTo",
@@ -220,11 +220,14 @@ const attrLname = {
     "aai":  "allowedApp-IDs",
     "aae":  "allowedAEs",
     "rsp": "responsePrimitive",
-    "dcrp": "descriptor",
+    "dsp": "descriptor",
+    "dcrp": "descriptorRepresenation",
+    "soe": "semanticOpExec",
+    "rels": "relatedSemantics",
     "pei":"periodicInterval",
     "mdd":"missingDataDetect",
     "mdn":"missingDataMaxNr",
-    "mdl":"missingDataList",
+    "mdlt":"missingDataList",
     "mdc":"missingDataCurrentNr",
     "mdt":"missingDataDetectTimer",
     "dgt":"dataGenerationTime",
@@ -315,7 +318,7 @@ const attrLname = {
     "rtv":"responseTypeValue"
 };
 
-const attrSname = {
+var attrSname = {
     "accessControlPolicyIDs"       :"acpi",
     "announcedAttribute"           :"aa",
     "announceTo"                   :"at",
@@ -509,11 +512,14 @@ const attrSname = {
     "allowedAEs"                   :"aae",
     "singleNotification":  "sgn",
     "responsePrimitive":"rsp",
-    "descriptor":"dcrp",
+    "descriptor":"dsp",
+    "descriptorRepresenation": "dcrp",
+    "semanticOpExec": "soe",
+    "relatedSemantics": "rels",
     "periodicInterval":"pei",
     "missingDataDetect":"mdd",
     "missingDataMaxNr":"mdn",
-    "missingDataList":"mdl",
+    "missingDataList":"mdlt",
     "missingDataCurrentNr":"mdc",
     "missingDataDetectTimer":"mdt",
     "dataGenerationTime":"dgt",
@@ -601,7 +607,7 @@ const attrSname = {
     "firmwarename":"fwnnam"
 };
 
-const rceLname = {
+var rceLname = {
     "cb" : "CSEBase",
     "ae" : "AE",
     "csr": "remoteCSE",
@@ -680,7 +686,7 @@ const rceLname = {
 };
 
 
-const rceSname = {
+var rceSname = {
     "CSEBase"           : "cb",
     "AE"                : "ae",
     "remoteCSE"         : "csr",
@@ -758,7 +764,7 @@ const rceSname = {
 };
 
 
-const typeRsrc = {
+var typeRsrc = {
     "1": "acp",
     "2": "ae",
     "3": "cnt",
@@ -775,10 +781,12 @@ const typeRsrc = {
     "27": "mms",
     "29": "ts",
     "30": "tsi",
+    "38": "tm",
+    "39": "tr",
     "99": "rsp"
 };
 
-const mgoType = {
+var mgoType = {
     "1001": "fwr",
     "1006": "bat",
     "1007": "dvi",
@@ -796,21 +804,40 @@ exports.attrSname = attrSname;
 function typeCheckAction(index1, body_Obj) {
     for (var index2 in body_Obj) {
         if(body_Obj.hasOwnProperty(index2)) {
-            if (body_Obj[index2] == null || body_Obj[index2] == '' || body_Obj[index2] == 'undefined' || body_Obj[index2] == '[]') {
-                delete body_Obj[index2];
-            }
-
-            else if (index2 == 'cst' || index2 == 'los' || index2 == 'mt' || index2 == 'csy' || index2 == 'nct' ||
-                index2 == 'cs' || index2 == 'st' || index2 == 'ty' || index2 == 'cbs' || index2 == 'cni' || index2 == 'mni' ||
-                index2 == 'cnm' || index2 == 'mia' || index2 == 'mbs' || index2 == 'cnf' || index2 == 'mgd' || index2 == 'btl' || index2 == 'bts' ||
-                index2 == 'mdn' || index2 == 'mdc' || index2 == 'mdt' || index2 == 'pei' || index2 == 'mnm') {
-
-                if ((index1 == 'm2m:cin' || index1 == 'm2m:nod' || index1 == 'm2m:ae' || index1 == 'm2m:sub' || index1 == 'm2m:acp' || index1 == 'm2m:csr' || index1 == 'm2m:grp'
-                    || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' || index1 == 'm2m:rbo') && index2 == 'mni') {
+            if (body_Obj[index2] == null || body_Obj[index2] == '' || body_Obj[index2] == 'undefined' || body_Obj[index2] == '[]' || body_Obj[index2] == '\"\"') {
+                //delete body_Obj[index2];
+                if(index2 != 'pi') {
                     delete body_Obj[index2];
                 }
-                else if ((index1 == 'm2m:cb' || index1 == 'm2m:csr' || index1 == 'm2m:ae' || index1 == 'm2m:acp' || index1 == 'm2m:grp' || index1 == 'm2m:sub' || index1 == 'm2m:nod'
-                    || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' || index1 == 'm2m:rbo') && index2 == 'st') {
+            }
+            else if (index2 == 'et') {
+                if (index1 == 'm2m:cb') {
+                    delete body_Obj[index2];
+                }
+            }
+            else if (index2 == 'cr') {
+                if (index1 == 'm2m:ae' || index1 == 'm2m:csr') {
+                    delete body_Obj[index2];
+                }
+            }
+            else if (index2 == 'acp' || index2 == 'cst' || index2 == 'los' || index2 == 'mt' || index2 == 'csy' || index2 == 'nct' ||
+                index2 == 'cs' || index2 == 'st' || index2 == 'ty' || index2 == 'cbs' || index2 == 'cni' || index2 == 'mni' ||
+                index2 == 'cnm' || index2 == 'mia' || index2 == 'mbs' || index2 == 'mgd' || index2 == 'btl' || index2 == 'bts' ||
+                index2 == 'mdn' || index2 == 'mdc' || index2 == 'mdt' || index2 == 'pei' || index2 == 'mnm' || index2 == 'exc') {
+
+                if ((index1 == 'm2m:cb' || index1 == 'm2m:cin' || index1 == 'm2m:nod' || index1 == 'm2m:ae' || index1 == 'm2m:sub' || index1 == 'm2m:acp' ||
+                        index1 == 'm2m:csr' || index1 == 'm2m:grp' || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' ||
+                        index1 == 'm2m:rbo' || index1 == 'm2m:smd' || index1 == 'm2m:tr' || index1 == 'm2m:tm') &&
+                    index2 == 'mni') {
+                    delete body_Obj[index2];
+                }
+                else if ((index1 == 'm2m:cb' || index1 == 'm2m:csr' || index1 == 'm2m:ae' || index1 == 'm2m:acp' || index1 == 'm2m:grp' || index1 == 'm2m:sub' ||
+                        index1 == 'm2m:nod' || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' || index1 == 'm2m:rbo' ||
+                        index1 == 'm2m:tr' || index1 == 'm2m:tm') &&
+                    index2 == 'st') {
+                    delete body_Obj[index2];
+                }
+                else if ((index1 == 'm2m:acp') && index2 == 'acpi') {
                     delete body_Obj[index2];
                 }
                 else {
@@ -822,8 +849,12 @@ function typeCheckAction(index1, body_Obj) {
                     body_Obj[index2] = JSON.parse(body_Obj[index2]);
                 }
 
-                if(index2 == 'acpi') {
-                    make_cse_relative(body_Obj[index2]);
+                if (index2 == 'srt') {
+                    for (index3 in body_Obj[index2]) {
+                        if (body_Obj[index2].hasOwnProperty(index3)) {
+                            body_Obj[index2][index3] = parseInt(body_Obj[index2][index3]);
+                        }
+                    }
                 }
             }
             else if (index2 == 'enc') {
@@ -844,10 +875,15 @@ function typeCheckAction(index1, body_Obj) {
                 }
             }
             else if (index2 == 'bn') {
-                for (var index3 in body_Obj[index2]) {
-                    if (body_Obj[index2].hasOwnProperty(index3)) {
-                        if(index3 == 'num') {
-                            body_Obj[index2][index3] = parseInt(body_Obj[index2][index3]);
+                if(Object.keys(body_Obj[index2]).length == 0) {
+                    delete body_Obj[index2];
+                }
+                else {
+                    for (var index3 in body_Obj[index2]) {
+                        if (body_Obj[index2].hasOwnProperty(index3)) {
+                            if(index3 == 'num') {
+                                body_Obj[index2][index3] = parseInt(body_Obj[index2][index3]);
+                            }
                         }
                     }
                 }
@@ -861,15 +897,8 @@ function typeCheckAction(index1, body_Obj) {
                     }
                 }
             }
-            else if (index2 == 'srt') {
-                for (index3 in body_Obj[index2]) {
-                    if (body_Obj[index2].hasOwnProperty(index3)) {
-                        body_Obj[index2][index3] = parseInt(body_Obj[index2][index3]);
-                    }
-                }
-            }
             else if (index2 == 'rr' || index2 == 'mtv' || index2 == 'ud' || index2 == 'att' || index2 == 'cus' || index2 == 'ena' || index2 == 'dis' || index2 == 'rbo' ||
-                index2 == 'far' || index2 == 'mdd' ) {
+                index2 == 'far' || index2 == 'mdd' || index2 == 'disr') {
                 body_Obj[index2] = ((body_Obj[index2] == 'true') || ((body_Obj[index2] == true)));
             }
             else if (index2 == 'sri') {
@@ -881,24 +910,340 @@ function typeCheckAction(index1, body_Obj) {
                 delete body_Obj[index2];
             }
             else if (index2 == 'pv' || index2 == 'pvs') {
-                if (!Array.isArray(body_Obj[index2].acr)) {
+                if(getType(body_Obj[index2]) === 'string') {
                     body_Obj[index2] = JSON.parse(body_Obj[index2]);
                 }
+            }
+        }
+    }
+}
 
-                body_Obj[index2]['acr'].splice(body_Obj[index2]['acr'].length-1, 1);
+function xmlInsert(xml, body_Obj, attr_name) {
+    for (var attr in body_Obj) {
+        if (body_Obj.hasOwnProperty(attr)) {
+            if (attr === attr_name) {
+                var con_type = getType(body_Obj[attr]);
+                if(con_type === 'object') {
+                    var xml2 = xml.ele(attr);
+                    for(var attr2 in body_Obj[attr]) {
+                        if (body_Obj[attr].hasOwnProperty(attr2)) {
+                            xmlInsert(xml2, body_Obj[attr], attr2)
+                        }
+                    }
+                }
+                else if(con_type === 'array') {
+                    for(var idx in body_Obj[attr]) {
+                        if (body_Obj[attr].hasOwnProperty(idx)) {
+                            var attr_type = getType(body_Obj[attr][idx]);
+                            if(attr_type === 'object') {
+                                xml2 = xml.ele(attr);
+                                for(attr2 in body_Obj[attr][idx]) {
+                                    if (body_Obj[attr][idx].hasOwnProperty(attr2)) {
+                                        xmlInsert(xml2, body_Obj[attr][idx], attr2)
+                                    }
+                                }
+                            }
+                            else {
+                                xml.ele(attr, body_Obj[attr].toString().replace(/,/g, ' '));
+                                delete body_Obj[attr];
+                                break;
+                            }
+                        }
+                    }
+
+                }
+                else {
+                    xml.ele(attr, body_Obj[attr]);
+                }
+                delete body_Obj[attr];
+                break;
+            }
+        }
+    }
+}
+
+function xmlInsertAfter(xml, body_Obj, attr_name, attr_name_after) {
+    for (var attr in body_Obj) {
+        if (body_Obj.hasOwnProperty(attr)) {
+            if (attr == attr_name) {
+                xml.ele(attr, body_Obj[attr]).insertAfter(attr_name_after);
+                delete body_Obj[attr];
+                break;
+            }
+        }
+    }
+}
+
+function xmlInsertList(xml, body_Obj, attr_name) {
+    for (var attr in body_Obj) {
+        if (body_Obj.hasOwnProperty(attr)) {
+            if (attr == attr_name) {
+                xml.ele(attr, body_Obj[attr].toString().replace(/,/g, ' '));
+                delete body_Obj[attr];
+                break;
             }
         }
     }
 }
 
 function xmlAction(xml, body_Obj) {
+    xmlInsert(xml, body_Obj, 'ty');
+    xmlInsert(xml, body_Obj, 'ri');
+    xmlInsert(xml, body_Obj, 'pi');
+    xmlInsert(xml, body_Obj, 'ct');
+    xmlInsert(xml, body_Obj, 'lt');
+    xmlInsertList(xml, body_Obj, 'lbl');
+    xmlInsertList(xml, body_Obj, 'acpi');
+
+    if(xml.name === 'm2m:cb') {
+        xmlInsert(xml, body_Obj, 'cst');
+        xmlInsert(xml, body_Obj, 'csi');
+        xmlInsertList(xml, body_Obj, 'srt');
+        xmlInsertList(xml, body_Obj, 'poa');
+        xmlInsert(xml, body_Obj, 'nl');
+        xmlInsert(xml, body_Obj, 'dac');
+        xmlInsert(xml, body_Obj, 'esi');
+        xmlInsert(xml, body_Obj, 'ch');
+    }
+    else {
+        xmlInsert(xml, body_Obj, 'et');
+        xmlInsert(xml, body_Obj, 'at');
+        xmlInsert(xml, body_Obj, 'aa');
+        if (xml.name === 'm2m:csr') {
+            xmlInsertAfter(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'cst');
+            xmlInsertList(xml, body_Obj, 'poa');
+            xmlInsert(xml, body_Obj, 'cb');
+            xmlInsert(xml, body_Obj, 'csi');
+            xmlInsert(xml, body_Obj, 'mei');
+            xmlInsert(xml, body_Obj, 'tri');
+            xmlInsert(xml, body_Obj, 'rr');
+            xmlInsert(xml, body_Obj, 'nl');
+            xmlInsert(xml, body_Obj, 'trn');
+            xmlInsert(xml, body_Obj, 'esi');
+        }
+        else if (xml.name === 'm2m:ae') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'apn');
+            xmlInsert(xml, body_Obj, 'api');
+            xmlInsert(xml, body_Obj, 'aei');
+            xmlInsertList(xml, body_Obj, 'poa');
+            xmlInsert(xml, body_Obj, 'or');
+            xmlInsert(xml, body_Obj, 'nl');
+            xmlInsert(xml, body_Obj, 'rr');
+            xmlInsert(xml, body_Obj, 'csz');
+            xmlInsert(xml, body_Obj, 'esi');
+        }
+        else if (xml.name === 'm2m:cnt') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'st');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'mni');
+            xmlInsert(xml, body_Obj, 'mbs');
+            xmlInsert(xml, body_Obj, 'mia');
+            xmlInsert(xml, body_Obj, 'cni');
+            xmlInsert(xml, body_Obj, 'cbs');
+            xmlInsert(xml, body_Obj, 'li');
+            xmlInsert(xml, body_Obj, 'or');
+            xmlInsert(xml, body_Obj, 'disr');
+        }
+        else if (xml.name === 'm2m:cin') {
+            xmlInsert(xml, body_Obj, 'st');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'cnf');
+            xmlInsert(xml, body_Obj, 'cs');
+            xmlInsert(xml, body_Obj, 'conr');
+            xmlInsert(xml, body_Obj, 'or');
+            xmlInsert(xml, body_Obj, 'con');
+        }
+        else if (xml.name === 'm2m:smd') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'dcrp');
+            xmlInsert(xml, body_Obj, 'soe');
+            xmlInsert(xml, body_Obj, 'dsp');
+            xmlInsert(xml, body_Obj, 'or');
+            xmlInsert(xml, body_Obj, 'rels');
+        }
+        else if (xml.name === 'm2m:sub') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+
+            for (attr in body_Obj) {
+                if (body_Obj.hasOwnProperty(attr)) {
+                    if (attr == 'enc') {
+                        var xml2 = xml.ele(attr, '');
+                        for (var sub_attr in body_Obj[attr]) {
+                            if (body_Obj[attr].hasOwnProperty(sub_attr)) {
+                                xml2.ele(sub_attr, body_Obj[attr][sub_attr].toString().replace(/,/g, ' '));
+                            }
+                        }
+                        delete body_Obj[attr];
+                        break;
+                    }
+                }
+            }
+
+            xmlInsert(xml, body_Obj, 'exc');
+            xmlInsertList(xml, body_Obj, 'nu');
+            xmlInsert(xml, body_Obj, 'gpi');
+            xmlInsert(xml, body_Obj, 'nfu');
+
+            for (attr in body_Obj) {
+                if (body_Obj.hasOwnProperty(attr)) {
+                    if (attr == 'bn') {
+                        xml2 = xml.ele(attr, '');
+                        for (sub_attr in body_Obj[attr]) {
+                            if (body_Obj[attr].hasOwnProperty(sub_attr)) {
+                                xml2.ele(sub_attr, body_Obj[attr][sub_attr].toString());
+                            }
+                        }
+                        delete body_Obj[attr];
+                        break;
+                    }
+                }
+            }
+
+            xmlInsert(xml, body_Obj, 'rl');
+            xmlInsert(xml, body_Obj, 'psn');
+            xmlInsert(xml, body_Obj, 'pn');
+            xmlInsert(xml, body_Obj, 'nsp');
+            xmlInsert(xml, body_Obj, 'ln');
+            xmlInsert(xml, body_Obj, 'nct');
+            xmlInsert(xml, body_Obj, 'nec');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'su');
+        }
+
+        else if (xml.name === 'm2m:grp') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'mt');
+            xmlInsert(xml, body_Obj, 'cnm');
+            xmlInsert(xml, body_Obj, 'mnm');
+            xmlInsertList(xml, body_Obj, 'mid');
+            xmlInsertList(xml, body_Obj, 'macp');
+            xmlInsert(xml, body_Obj, 'mtv');
+            xmlInsert(xml, body_Obj, 'csy');
+            xmlInsert(xml, body_Obj, 'gn');
+            xmlInsert(xml, body_Obj, 'csi');
+        }
+
+        else if (xml.name === 'm2m:ts') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'st');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'mni');
+            xmlInsert(xml, body_Obj, 'mbs');
+            xmlInsert(xml, body_Obj, 'mia');
+            xmlInsert(xml, body_Obj, 'cni');
+            xmlInsert(xml, body_Obj, 'cbs');
+            xmlInsert(xml, body_Obj, 'pei');
+            xmlInsert(xml, body_Obj, 'mdd');
+            xmlInsert(xml, body_Obj, 'mdn');
+            xmlInsertList(xml, body_Obj, 'mdlt');
+            xmlInsert(xml, body_Obj, 'mdc');
+            xmlInsert(xml, body_Obj, 'mdt');
+            xmlInsert(xml, body_Obj, 'or');
+        }
+
+        else if (xml.name === 'm2m:tsi') {
+            xmlInsert(xml, body_Obj, 'dgt');
+            xmlInsert(xml, body_Obj, 'con');
+            xmlInsert(xml, body_Obj, 'snr');
+            xmlInsert(xml, body_Obj, 'cs');
+        }
+
+        else if (xml.name === 'm2m:acp') {
+            for (attr in body_Obj) {
+                if (body_Obj.hasOwnProperty(attr)) {
+                    if (attr == 'pv' || attr == 'pvs') {
+                        xml2 = xml.ele(attr, '');
+                        for (sub_attr in body_Obj[attr]) {
+                            if (body_Obj[attr].hasOwnProperty(sub_attr)) {
+                                for (sub_attr2 in body_Obj[attr][sub_attr]) {
+                                    if (body_Obj[attr][sub_attr].hasOwnProperty(sub_attr2)) {
+                                        var xml3 = xml2.ele(sub_attr, '');
+                                        for (var sub_attr3 in body_Obj[attr][sub_attr][sub_attr2]) {
+                                            if (body_Obj[attr][sub_attr][sub_attr2].hasOwnProperty(sub_attr3)) {
+                                                if(sub_attr3 == 'acco') {
+                                                    for (var sub_attr4 in body_Obj[attr][sub_attr][sub_attr2][sub_attr3]) {
+                                                        if (body_Obj[attr][sub_attr][sub_attr2][sub_attr3].hasOwnProperty(sub_attr4)) {
+                                                            var xml4 = xml3.ele(sub_attr3, '');
+                                                            for (var sub_attr5 in body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4]) {
+                                                                if (body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4].hasOwnProperty(sub_attr5)) {
+                                                                    if(sub_attr5 == 'acip') {
+                                                                        var xml5 = xml4.ele(sub_attr5, '');
+                                                                        for (var sub_attr6 in body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4][sub_attr5]) {
+                                                                            if (body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4][sub_attr5].hasOwnProperty(sub_attr6)) {
+                                                                                var xml6 = xml5.ele(sub_attr6, '');
+                                                                                xml6.txt(body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4][sub_attr5][sub_attr6]);
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    if(sub_attr5 == 'actw') {
+                                                                        xml5 = xml4.ele(sub_attr5, '');
+                                                                        xml5.txt(body_Obj[attr][sub_attr][sub_attr2][sub_attr3][sub_attr4][sub_attr5]);
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                else {
+                                                    xml3.ele(sub_attr3, body_Obj[attr][sub_attr][sub_attr2][sub_attr3].toString().replace(/,/g, ' '));
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        delete body_Obj[attr];
+                    }
+                }
+            }
+            xmlInsert(xml, body_Obj, 'cr');
+        }
+
+        else if (xml.name === 'm2m:tm') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'tltm');
+            xmlInsert(xml, body_Obj, 'text');
+            xmlInsert(xml, body_Obj, 'tct');
+            xmlInsert(xml, body_Obj, 'tept');
+            xmlInsert(xml, body_Obj, 'tmd');
+            xmlInsert(xml, body_Obj, 'tltp');
+            xmlInsert(xml, body_Obj, 'tctl');
+            xmlInsert(xml, body_Obj, 'tst');
+            xmlInsert(xml, body_Obj, 'tmr');
+            xmlInsert(xml, body_Obj, 'tmh');
+            xmlInsert(xml, body_Obj, 'rqps');
+            xmlInsert(xml, body_Obj, 'rsps');
+        }
+
+        else if (xml.name === 'm2m:tr') {
+            xmlInsert(xml, body_Obj, 'daci', 'et');
+            xmlInsert(xml, body_Obj, 'cr');
+            xmlInsert(xml, body_Obj, 'tid');
+            xmlInsert(xml, body_Obj, 'tctl');
+            xmlInsert(xml, body_Obj, 'tst');
+            xmlInsert(xml, body_Obj, 'tltm');
+            xmlInsert(xml, body_Obj, 'text');
+            xmlInsert(xml, body_Obj, 'tct');
+            xmlInsert(xml, body_Obj, 'tltp');
+            xmlInsert(xml, body_Obj, 'trqp');
+            xmlInsert(xml, body_Obj, 'trsp');
+        }
+    }
+
     for (var attr in body_Obj) {
         if (body_Obj.hasOwnProperty(attr)) {
             if (attr == 'resourceName' || attr == 'rn') {
                 xml.att(attr, body_Obj[attr]);
             }
             else if (attr == 'eventNotificationCriteria' || attr == 'enc') {
-                var xml2 = xml.ele(attr, '');
+                xml2 = xml.ele(attr, '');
                 for (sub_attr in body_Obj[attr]) {
                     if (body_Obj[attr].hasOwnProperty(sub_attr)) {
                         xml2.ele(sub_attr, body_Obj[attr][sub_attr].toString().replace(/,/g, ' '));
@@ -915,12 +1260,12 @@ function xmlAction(xml, body_Obj) {
             }
             else if (attr == 'privileges' || attr == 'pv' || attr == 'selfPrivileges' || attr == 'pvs') {
                 xml2 = xml.ele(attr, '');
-                for (var sub_attr in body_Obj[attr]) {
+                for (sub_attr in body_Obj[attr]) {
                     if (body_Obj[attr].hasOwnProperty(sub_attr)) {
                         for (var sub_attr2 in body_Obj[attr][sub_attr]) {
                             if (body_Obj[attr][sub_attr].hasOwnProperty(sub_attr2)) {
-                                var xml3 = xml2.ele(sub_attr, '');
-                                for (var sub_attr3 in body_Obj[attr][sub_attr][sub_attr2]) {
+                                xml3 = xml2.ele(sub_attr, '');
+                                for (sub_attr3 in body_Obj[attr][sub_attr][sub_attr2]) {
                                     if (body_Obj[attr][sub_attr][sub_attr2].hasOwnProperty(sub_attr3)) {
                                         xml3.ele(sub_attr3, body_Obj[attr][sub_attr][sub_attr2][sub_attr3].toString().replace(/,/g, ' '));
                                     }
@@ -951,6 +1296,10 @@ function xmlAction(xml, body_Obj) {
             else if (attr == 'membersAccessControlPolicyIDs' || attr == 'macp') {
                 xml.ele(attr, body_Obj[attr].toString().replace(/,/g, ' '));
             }
+            else if (attr == 'mdlt') {
+                xml.ele(attr, body_Obj[attr].toString().replace(/,/g, ' '));
+            }
+
             else if (attr == 'pc') {
                 xml2 = xml.ele(attr, '');
                 for (var sub_attr in body_Obj[attr]) {
@@ -966,7 +1315,7 @@ function xmlAction(xml, body_Obj) {
     }
 }
 
-function convertXml(rootnm, body_Obj) {
+exports.convertXml = function(rootnm, body_Obj) {
     var xml = xmlbuilder.create('m2m:' + rootnm, {version: '1.0', encoding: 'UTF-8', standalone: true},
         {pubID: null, sysID: null}, {
             allowSurrogateChars: false,
@@ -991,9 +1340,9 @@ function convertXml(rootnm, body_Obj) {
         }
     }
     return xml.end({pretty: false, indent: '  ', newline: '\n'}).toString();
-}
+};
 
-function convertXml2(rootnm, body_Obj) {
+exports.convertXml2 = function(rootnm, body_Obj) {
     var xml = xmlbuilder.create('m2m:' + rootnm, {version: '1.0', encoding: 'UTF-8', standalone: true},
         {pubID: null, sysID: null}, {
             allowSurrogateChars: false,
@@ -1041,7 +1390,105 @@ function convertXml2(rootnm, body_Obj) {
     }
 
     return xml.end({pretty: false, indent: '  ', newline: '\n'}).toString();
-}
+};
+
+
+exports.convertXmlMqtt = function(rootnm, body_Obj) {
+    var xml = xmlbuilder.create('m2m:' + rootnm, {version: '1.0', encoding: 'UTF-8', standalone: true},
+        {pubID: null, sysID: null}, {
+            allowSurrogateChars: false,
+            skipNullAttributes: false,
+            headless: false,
+            ignoreDecorators: false,
+            stringify: {}
+        }
+    ).att('xmlns:m2m', 'http://www.onem2m.org/xml/protocols').att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+
+    xmlInsert(xml, body_Obj, 'rsc');
+    xmlInsert(xml, body_Obj, 'rqi');
+    var xml2 = xml.ele('pc');
+
+    for (var index in body_Obj) {
+        if (body_Obj.hasOwnProperty(index)) {
+            if(index == 'pc') {
+                for (var attr in body_Obj[index]) {
+                    if (body_Obj[index].hasOwnProperty(attr)) {
+                        if(attr == 'm2m:dbg') {
+                            xmlAction(xml2, body_Obj[index]);
+                            break;
+                        }
+                        else {
+                            var xml3 = xml2.ele(attr);
+                            xmlAction(xml3, body_Obj[index][attr]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return xml.end({pretty: false, indent: '  ', newline: '\n'}).toString();
+};
+
+exports.convertXmlSgn = function(rootnm, body_Obj) {
+    var sgn = xmlbuilder.create(rootnm, {version: '1.0', encoding: 'UTF-8', standalone: true},
+        {pubID: null, sysID: null}, {
+            allowSurrogateChars: false,
+            skipNullAttributes: false,
+            headless: false,
+            ignoreDecorators: false,
+            stringify: {}
+        }
+    ).att('xmlns:m2m', 'http://www.onem2m.org/xml/protocols').att('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
+
+    var sequence1 = ['nev', 'vrq', 'sud', 'sur', 'cr'];
+    var sequence2 = ['rep', 'net'];
+
+    for(var seq1 in sequence1) {
+        if(sequence1.hasOwnProperty(seq1)) {
+            for (var prop in body_Obj) {
+                if (body_Obj.hasOwnProperty(prop)) {
+                    if (prop === sequence1[seq1]) {
+                        if (prop === 'nev') {
+                            var xml_0 = sgn.ele(prop);
+                            for(var seq2 in sequence2) {
+                                if (sequence2.hasOwnProperty(seq2)) {
+                                    for (var agr_attr in body_Obj[prop]) {
+                                        if (body_Obj[prop].hasOwnProperty(agr_attr)) {
+                                            if (agr_attr === sequence2[seq2]) {
+                                                if (agr_attr === 'rep') {
+                                                    var xml_01 = xml_0.ele(agr_attr);
+                                                    for (var pc_attr in body_Obj[prop][agr_attr]) {
+                                                        if (body_Obj[prop][agr_attr].hasOwnProperty(pc_attr)) {
+                                                            var xml_1 = xml_01.ele(pc_attr);
+                                                            xmlAction(xml_1, body_Obj[prop][agr_attr][pc_attr]);
+                                                        }
+                                                    }
+                                                    break;
+                                                }
+                                                else if (agr_attr === 'net') {
+                                                    xml_0.ele(agr_attr, body_Obj[prop][agr_attr]);
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                        else {
+                            sgn.ele(prop, body_Obj[prop]);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return sgn.end({pretty: false, indent: '  ', newline: '\n'}).toString();
+};
 
 exports.typeCheckforJson = function(body_Obj) {
     for (var index1 in body_Obj) {
@@ -1061,6 +1508,35 @@ function typeCheckforJson2(body_Obj) {
             }
         }
     }
+}
+
+function store_to_req_resource(request, bodyString, rsc, cap) {
+    db_sql.update_req('/' + request.headers.tg, bodyString, rsc, function () {
+        var rspObj = {};
+        rspObj.rsc = rsc;
+        rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
+        rspObj = cap;
+        console.log(JSON.stringify(rspObj));
+
+        if (request.headers['x-m2m-rtu'] != null && request.headers['x-m2m-rtu'] != '') {
+            var nu = request.headers['x-m2m-rtu'];
+            var sub_nu = url.parse(nu);
+            var xm2mri = require('shortid').generate();
+
+            if (sub_nu.protocol == 'http:') {
+                request_noti_http(nu, bodyString, request.headers.usebodytype, xm2mri);
+            }
+            else if (sub_nu.protocol == 'coap:') {
+                request_noti_coap(nu, bodyString, request.headers.usebodytype, xm2mri);
+            }
+            else if (sub_nu.protocol == 'ws:') {
+                request_noti_ws(nu, bodyString, request.headers.usebodytype, xm2mri);
+            }
+            else { // mqtt:
+                request_noti_mqtt(nu, bodyString, request.headers.usebodytype, xm2mri);
+            }
+        }
+    });
 }
 
 exports.response_result = function(request, response, status, body_Obj, rsc, ri, cap) {
@@ -1141,16 +1617,16 @@ exports.response_result = function(request, response, status, body_Obj, rsc, ri,
 
         var bodyString = JSON.stringify(body_Obj);
 
-        //console.log(bodyString);
+        console.log(bodyString);
 
-        if (request.query.rt == 3) {
+        if (request.query.rt == 3 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] == null && request.headers['x-m2m-rtu'] == '')) {
             if (request.headers.usebodytype == 'json') {
             }
             else if (request.headers.usebodytype == 'cbor') {
                 bodyString = cbor.encode(body_Obj).toString('hex');
             }
             else {
-                bodyString = convertXml(rootnm, body_Obj);
+                bodyString = _this.convertXml(rootnm, body_Obj);
             }
 
             response.status(status).end(bodyString);
@@ -1170,33 +1646,8 @@ exports.response_result = function(request, response, status, body_Obj, rsc, ri,
             // fs.appendFileSync('get_elapsed_time.log', elapsed_hr_str, 'utf-8');
             // delete elapsed_hrstart[elapsed_tid];
         }
-        else if (request.query.rt == 1 || request.query.rt == 2) {
-            db_sql.update_req('/'+request.headers.tg, bodyString, rsc, function () {
-                rspObj = {};
-                rspObj.rsc = rsc;
-                rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
-                rspObj = cap;
-                console.log(JSON.stringify(rspObj));
-
-                if(request.query.rt == 2 && request.headers['x-m2m-rtu'] != null) {
-                    var nu = request.headers['x-m2m-rtu'];
-                    var sub_nu = url.parse(nu);
-                    var xm2mri = require('shortid').generate();
-
-                    if (sub_nu.protocol == 'http:') {
-                        request_noti_http(nu, bodyString, request.headers.usebodytype, xm2mri);
-                    }
-                    else if (sub_nu.protocol == 'coap:') {
-                        request_noti_coap(nu, bodyString, request.headers.usebodytype, xm2mri);
-                    }
-                    else if (sub_nu.protocol == 'ws:') {
-                        request_noti_ws(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                    }
-                    else { // mqtt:
-                        request_noti_mqtt(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                    }
-                }
-            });
+        else if (request.query.rt == 1 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] != null && request.headers['x-m2m-rtu'] != '')) {
+            store_to_req_resource(request, bodyString, rsc, cap);
         }
     }
 };
@@ -1253,7 +1704,7 @@ exports.response_rcn3_result = function(request, response, status, body_Obj, rsc
 
     var bodyString = JSON.stringify(body_Obj);
 
-    if (request.query.rt == 3) {
+    if (request.query.rt == 3 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] == null && request.headers['x-m2m-rtu'] == '')) {
         if (request.headers.usebodytype == 'json') {
         }
         else if (request.headers.usebodytype == 'cbor') {
@@ -1296,33 +1747,8 @@ exports.response_rcn3_result = function(request, response, status, body_Obj, rsc
         rspObj = cap;
         console.log(JSON.stringify(rspObj));
     }
-    else if (request.query.rt == 1 || request.query.rt == 2) {
-        db_sql.update_req('/'+request.headers.tg, bodyString, rsc, function () {
-            rspObj = {};
-            rspObj.rsc = rsc;
-            rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
-            rspObj = cap;
-            console.log(JSON.stringify(rspObj));
-
-            if(request.query.rt == 2 && request.headers['x-m2m-rtu'] != null) {
-                var nu = request.headers['x-m2m-rtu'];
-                var sub_nu = url.parse(nu);
-                var xm2mri = require('shortid').generate();
-
-                if (sub_nu.protocol == 'http:') {
-                    request_noti_http(nu, bodyString, request.headers.usebodytype, xm2mri);
-                }
-                else if (sub_nu.protocol == 'coap:') {
-                    request_noti_coap(nu, bodyString, request.headers.usebodytype, xm2mri);
-                }
-                else if (sub_nu.protocol == 'ws:') {
-                    request_noti_ws(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                }
-                else { // mqtt:
-                    request_noti_mqtt(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                }
-            }
-        });
+    else if (request.query.rt == 1 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] != null && request.headers['x-m2m-rtu'] != '')) {
+        store_to_req_resource(request, bodyString, rsc, cap);
     }
 };
 
@@ -1457,9 +1883,9 @@ exports.search_result = function(request, response, status, body_Obj, rsc, ri, c
 
         typeCheckforJson2(body_Obj['m2m:' + rootnm]);
 
-        bodyString = JSON.stringify(body_Obj['m2m:' + rootnm]);
+        bodyString = JSON.stringify(body_Obj);
 
-        if (request.query.rt == 3) {
+        if (request.query.rt == 3 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] == null && request.headers['x-m2m-rtu'] == '')) {
             if (request.headers.usebodytype == 'json') {
             }
             else if (request.headers.usebodytype == 'cbor') {
@@ -1467,10 +1893,10 @@ exports.search_result = function(request, response, status, body_Obj, rsc, ri, c
             }
             else {
                 if(rootnm == 'agr') {
-                    bodyString = convertXml2(rootnm, body_Obj['m2m:' + rootnm]);
+                    bodyString = _this.convertXml2(rootnm, body_Obj['m2m:' + rootnm]);
                 }
                 else {
-                    bodyString = convertXml2(rootnm, body_Obj);
+                    bodyString = _this.convertXml2(rootnm, body_Obj);
                 }
             }
 
@@ -1482,33 +1908,8 @@ exports.search_result = function(request, response, status, body_Obj, rsc, ri, c
             rspObj = cap;
             console.log(JSON.stringify(rspObj));
         }
-        else if (request.query.rt == 1 || request.query.rt == 2) {
-            db_sql.update_req('/'+request.headers.tg, bodyString, rsc, function () {
-                rspObj = {};
-                rspObj.rsc = rsc;
-                rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
-                rspObj = cap;
-                console.log(JSON.stringify(rspObj));
-
-                if(request.query.rt == 2 && request.headers['x-m2m-rtu'] != null) {
-                    var nu = request.headers['x-m2m-rtu'];
-                    var sub_nu = url.parse(nu);
-                    var xm2mri = require('shortid').generate();
-
-                    if (sub_nu.protocol == 'http:') {
-                        request_noti_http(nu, bodyString, request.headers.usebodytype, xm2mri);
-                    }
-                    else if (sub_nu.protocol == 'coap:') {
-                        request_noti_coap(nu, bodyString, request.headers.usebodytype, xm2mri);
-                    }
-                    else if (sub_nu.protocol == 'ws:') {
-                        request_noti_ws(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                    }
-                    else { // mqtt:
-                        request_noti_mqtt(nu, JSON.stringify(node), request.headers.usebodytype, xm2mri);
-                    }
-                }
-            });
+        else if (request.query.rt == 1 || (request.query.rt == 2 && request.headers['x-m2m-rtu'] != null && request.headers['x-m2m-rtu'] != '')) {
+            store_to_req_resource(request, bodyString, rsc, cap);
         }
     }
 };
@@ -1520,7 +1921,6 @@ exports.error_result = function(request, response, status, rsc, dbg_string) {
 
     _this.response_result(request, response, status, body_Obj, rsc, request.url, body_Obj['dbg']);
 };
-
 
 function request_noti_http(nu, bodyString, bodytype, xm2mri) {
     var options = {
@@ -1709,15 +2109,21 @@ function request_noti_mqtt(nu, bodyString, bodytype, xm2mri) {
 
         _mqtt_client.publish(noti_topic, bodyString);
         console.log('<---- [nonblocking-async-mqtt] ' + noti_topic);
+        _mqtt_client.end(function () {
+            _mqtt_client = null;
+        });
     });
 
     _mqtt_client.on('message', function (topic, message) {
         console.log('----> [nonblocking-async-mqtt] ' + topic + ' - ' + message);
-
-        _mqtt_client.end();
+        _mqtt_client.end(function () {
+            _mqtt_client = null;
+        });
     });
 
     _mqtt_client.on('error', function (error) {
-        _mqtt_client.end();
+        _mqtt_client.end(true, function () {
+            _mqtt_client = null;
+        });
     });
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, OCEAN
+ * Copyright (c) 2018, KETI
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -10,7 +10,7 @@
 
 /**
  * @file
- * @copyright KETI Korea 2017, OCEAN
+ * @copyright KETI Korea 2018, KETI
  * @author Il Yeup Ahn [iyahn@keti.re.kr]
  */
 
@@ -252,11 +252,15 @@ exports.build_asn = function(ri, callback) {
                             }
                             
                             if(parent_cbprotocol == 'http') {
-                                create_remoteCSE_http(parent_cbname, parent_cbhost, parent_cbhostport, rspObj, function (rsc) {
+                                create_remoteCSE_http(parent_cbname, parent_cbhost, parent_cbhostport, rspObj, function (res, body) {
+                                    var rsc = res.statusCode;
+                                    console.log(rsc + ' : ' + body);
                                     if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
                                         retrieve_CSEBase_http(parent_cbname, parent_cbhost, parent_cbhostport, function (rsc, jsonObj) {
                                             if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
-                                                create_remoteCSE_http(usecsebase, 'localhost', usecsebaseport, jsonObj, function (rsc) {
+                                                create_remoteCSE_http(usecsebase, 'localhost', usecsebaseport, jsonObj, function (res, body) {
+                                                    var rsc = res.statusCode;
+                                                    console.log(rsc + ' : ' + body);
                                                     if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
                                                         rspObj = {};
                                                         rspObj.rsc = '2000';

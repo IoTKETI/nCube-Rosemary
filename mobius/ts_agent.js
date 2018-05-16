@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015, OCEAN
+ * Copyright (c) 2018, KETI
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -10,7 +10,7 @@
 
 /**
  * @file Main code of Mobius Yellow. Role of flow router
- * @copyright KETI Korea 2015, OCEAN
+ * @copyright KETI Korea 2018, KETI
  * @author Il Yeup Ahn [iyahn@keti.re.kr]
  */
 
@@ -227,10 +227,10 @@ var missing_detect_check = function(pei, mdd, mdt, cni, ri, callback) {
                             if (parseInt(results[0].mdc, 10) <= parseInt(results[0].mdn, 10)) {
                                 var cur_d = new Date();
                                 var timestamp = cur_d.toISOString().replace(/-/, '').replace(/-/, '').replace(/:/, '').replace(/:/, '').replace(/\..+/, '');
-                                var mdl = timestamp + ' ' + results[0].mdl;
+                                var mdlt = timestamp + ' ' + results[0].mdlt;
                                 var mdc = (parseInt(results[0].mdc, 10) + 1).toString();
-                                console.log(mdc, mdl);
-                                db_sql.update_ts_mdcn_mdl(mdc, mdl, ri, function (err, results) {
+                                console.log(mdc, mdlt);
+                                db_sql.update_ts_mdcn_mdl(mdc, mdlt, ri, function (err, results) {
                                     if (!err) {
                                     }
                                     else {
@@ -303,14 +303,17 @@ ts_app.post('/missingDataDetect', onem2mParser, function(request, response) {
                 //console.log(responseBody);
 
                 var jsonObj = JSON.parse(responseBody);
+                var ts_ri = [];
                 if (jsonObj['m2m:dbg']) {
-                    var ts_ri = [];
-                }
-                else if (jsonObj['m2m:uril']['_'] == null) {
                     ts_ri = [];
                 }
-                else {
-                    ts_ri = jsonObj['m2m:uril']['_'].toString().split(' ');
+                else if (jsonObj['m2m:uril']) {
+                    if (jsonObj['m2m:uril'].hasOwnProperty('_')) {
+                        ts_ri = jsonObj['m2m:uril']['_'].toString().split(' ');
+                    }
+                    else {
+                        ts_ri = [];
+                    }
                 }
 
                 var ts = {};

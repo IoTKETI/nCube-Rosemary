@@ -35,7 +35,7 @@ global.parent_mqttbroker    = conf.parent.mqttbroker;
 // my CSE information
 global.usecsetype           = 'mn'; // select 'in' or 'mn' or 'asn'
 global.usecsebase           = 'rosemary';
-global.usecseid             = '/rosemary';
+global.usecseid             = '/rosemary2';
 global.usecsebaseport       = conf.csebaseport;
 
 global.usedbhost            = 'localhost';
@@ -57,7 +57,17 @@ else {
     usemqttport             = '1883';
 }
 
+global.useaccesscontrolpolicy = 'disable';
+
 global.wdt = require('./wdt');
+
+global.allowed_ae_ids = [];
+//allowed_ae_ids.push('ryeubi');
+
+global.allowed_app_ids = [];
+//allowed_app_ids.push('APP01');
+
+global.usesemanticbroker    = '10.10.202.114';
 
 // CSE core
 require('./app');

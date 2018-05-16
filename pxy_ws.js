@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017, OCEAN
+ * Copyright (c) 2018, KETI
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -10,7 +10,7 @@
 
 /**
  * @file
- * @copyright KETI Korea 2017, OCEAN
+ * @copyright KETI Korea 2018, KETI
  * @author Il Yeup Ahn [iyahn@keti.re.kr]
  */
 
@@ -152,7 +152,7 @@ exports.ws_watchdog = function() {
 
 var ws_tid = require('shortid').generate();
 wdt.set_wdt(ws_tid, 2, _this.ws_watchdog);
-
+/*
 function make_json_obj(bodytype, str, callback) {
     try {
         if (bodytype == 'xml') {
@@ -221,6 +221,40 @@ function make_json_obj(bodytype, str, callback) {
                                                                 if (result[prop][attr][attr2].pv.acr[acr_idx].acor) {
                                                                     result[prop][attr][attr2].pv.acr[acr_idx].acor = result[prop][attr][attr2].pv.acr[acr_idx].acor.split(' ');
                                                                 }
+
+                                                                if (result[prop][attr][attr2].pv.acr[acr_idx].hasOwnProperty('acco')) {
+                                                                    var acco = result[prop][attr][attr2].pv.acr[acr_idx].acco;
+
+                                                                    if (!Array.isArray(acco)) {
+                                                                        temp = acco;
+                                                                        acco = [];
+                                                                        acco[0] = temp;
+                                                                    }
+
+                                                                    for(var acco_idx in acco) {
+                                                                        if(acco.hasOwnProperty(acco_idx)) {
+                                                                            if (acco[acco_idx].hasOwnProperty('acip')) {
+                                                                                if (acco[acco_idx].acip.hasOwnProperty('ipv4')) {
+                                                                                    if (getType(acco[acco_idx].acip['ipv4']) == 'string') {
+                                                                                        acco[acco_idx].acip['ipv4'] = acco[acco_idx].acip.ipv4.split(' ');
+                                                                                    }
+                                                                                }
+                                                                                else if (acco[acco_idx].acip.hasOwnProperty('ipv6')) {
+                                                                                    if (getType(acco[acco_idx].acip['ipv6']) == 'string') {
+                                                                                        acco[acco_idx].acip['ipv6'] = acco[acco_idx].acip.ipv6.split(' ');
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            else if (acco[acco_idx].hasOwnProperty('actw')) {
+                                                                                if (getType(acco[acco_idx].actw) == 'string') {
+                                                                                    temp = acco[acco_idx].actw;
+                                                                                    acco[acco_idx]['actw'] = [];
+                                                                                    acco[acco_idx].actw[0] = temp;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -238,6 +272,40 @@ function make_json_obj(bodytype, str, callback) {
                                                             if (result[prop][attr][attr2].pvs.acr.hasOwnProperty(acr_idx)) {
                                                                 if (result[prop][attr][attr2].pvs.acr[acr_idx].acor) {
                                                                     result[prop][attr][attr2].pvs.acr[acr_idx].acor = result[prop][attr][attr2].pvs.acr[acr_idx].acor.split(' ');
+                                                                }
+
+                                                                if (result[prop][attr][attr2].pvs.acr[acr_idx].hasOwnProperty('acco')) {
+                                                                    acco = result[prop][attr][attr2].pvs.acr[acr_idx].acco;
+
+                                                                    if (!Array.isArray(acco)) {
+                                                                        temp = acco;
+                                                                        acco = [];
+                                                                        acco[0] = temp;
+                                                                    }
+
+                                                                    for(acco_idx in acco) {
+                                                                        if(acco.hasOwnProperty(acco_idx)) {
+                                                                            if (acco[acco_idx].hasOwnProperty('acip')) {
+                                                                                if (acco[acco_idx].acip.hasOwnProperty('ipv4')) {
+                                                                                    if (getType(acco[acco_idx].acip['ipv4']) == 'string') {
+                                                                                        acco[acco_idx].acip['ipv4'] = acco[acco_idx].acip.ipv4.split(' ');
+                                                                                    }
+                                                                                }
+                                                                                else if (acco[acco_idx].acip.hasOwnProperty('ipv6')) {
+                                                                                    if (getType(acco[acco_idx].acip['ipv6']) == 'string') {
+                                                                                        acco[acco_idx].acip['ipv6'] = acco[acco_idx].acip.ipv6.split(' ');
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                            else if (acco[acco_idx].hasOwnProperty('actw')) {
+                                                                                if (getType(acco[acco_idx].actw) == 'string') {
+                                                                                    temp = acco[acco_idx].actw;
+                                                                                    acco[acco_idx]['actw'] = [];
+                                                                                    acco[acco_idx].actw[0] = temp;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
                                                                 }
                                                             }
                                                         }
@@ -312,7 +380,7 @@ function make_json_obj(bodytype, str, callback) {
         callback('0');
     }
 }
-
+*/
 function ws_message_handler(message) {
     var _this = this;
     if(message.type === 'utf8') {
@@ -339,27 +407,51 @@ function ws_message_action(connection, bodytype, jsonObj) {
     if (jsonObj['m2m:rqp'] != null) {
         var op = (jsonObj['m2m:rqp'].op == null) ? '' : jsonObj['m2m:rqp'].op;
         var to = (jsonObj['m2m:rqp'].to == null) ? '' : jsonObj['m2m:rqp'].to;
-        var to_arr = to.split('/');
-        to = '';
-        if(to_arr[0] == '') { // SP Relative
+        if(to.split(usespid + '/' + usecseid + '/' + usecsebase)[0] == '') { // Absolute
+            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
+            to='/'+usecsebase;
             for(var i = 1; i < to_arr.length; i++) {
                 to += '/';
                 to += to_arr[i];
             }
         }
-        else { // CSE Relative
-            for(i = 0; i < to_arr.length; i++) {
+        else if(to.split(usecseid + '/' + usecsebase)[0] == '') { // SP Relative
+            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
+            to='/'+usecsebase;
+            for(i = 1; i < to_arr.length; i++) {
+                to += '/';
+                to += to_arr[i];
+            }
+        }
+        else if(to.split(usecsebase)[0] == '') { // CSE Relative
+            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
+            to='/'+usecsebase;
+            for(i = 1; i < to_arr.length; i++) {
                 to += '/';
                 to += to_arr[i];
             }
         }
         var fr = (jsonObj['m2m:rqp'].fr == null) ? '' : jsonObj['m2m:rqp'].fr;
-        if(fr == '') {
-            fr = topic_arr[3];
-        }
         var rqi = (jsonObj['m2m:rqp'].rqi == null) ? '' : jsonObj['m2m:rqp'].rqi;
         var ty = (jsonObj['m2m:rqp'].ty == null) ? '' : jsonObj['m2m:rqp'].ty.toString();
         var pc = (jsonObj['m2m:rqp'].pc == null) ? '' : jsonObj['m2m:rqp'].pc;
+
+        if(jsonObj['m2m:rqp'].fc) {
+            var query_count = 0;
+            for(var fc_idx in jsonObj['m2m:rqp'].fc) {
+                if(jsonObj['m2m:rqp'].fc.hasOwnProperty(fc_idx)) {
+                    if(query_count == 0) {
+                        to += '?';
+                    }
+                    else {
+                        to += '&';
+                    }
+                    to += fc_idx;
+                    to += '=';
+                    to += jsonObj['m2m:rqp'].fc[fc_idx].toString();
+                }
+            }
+        }
 
         try {
             if (to.split('/')[1].split('?')[0] == usecsebase) {
@@ -412,20 +504,21 @@ function ws_binding(op, to, fr, rqi, ty, pc, bodytype, callback) {
 
     var bodyStr = '';
 
-    if(usesecure == 'disable') {
-        var options = {
-            hostname: usewscbhost,
-            port: usecsebaseport,
-            path: to,
-            method: op,
-            headers: {
-                'X-M2M-RI': rqi,
-                'Accept': 'application/json',
-                'X-M2M-Origin': fr,
-                'Content-Type': content_type
-            }
-        };
+    var options = {
+        hostname: usewscbhost,
+        port: usecsebaseport,
+        path: to,
+        method: op,
+        headers: {
+            'X-M2M-RI': rqi,
+            'Accept': 'application/json',
+            'X-M2M-Origin': fr,
+            'Content-Type': content_type,
+            'binding': 'W'
+        }
+    };
 
+    if(usesecure == 'disable') {
         var req = http.request(options, function (res) {
             res.setEncoding('utf8');
 
@@ -439,19 +532,7 @@ function ws_binding(op, to, fr, rqi, ty, pc, bodytype, callback) {
         });
     }
     else {
-        options = {
-            hostname: usewscbhost,
-            port: usecsebaseport,
-            path: to,
-            method: op,
-            headers: {
-                'X-M2M-RI': rqi,
-                'Accept': 'application/json',
-                'X-M2M-Origin': fr,
-                'Content-Type': content_type
-            },
-            ca: fs.readFileSync('ca-crt.pem')
-        };
+        options.ca = fs.readFileSync('ca-crt.pem');
 
         req = https.request(options, function (res) {
             res.setEncoding('utf8');

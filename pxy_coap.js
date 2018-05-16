@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, OCEAN
+ * Copyright (c) 2018, KETI
  * All rights reserved.
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  * 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
@@ -14,7 +14,7 @@
 
 /**
  * @file
- * @copyright KETI Korea 2016, OCEAN
+ * @copyright KETI Korea 2018, KETI
  * @author Il Yeup Ahn [iyahn@keti.re.kr]
  */
 
@@ -22,16 +22,8 @@ var fs = require('fs');
 var http = require('http');
 var https = require('https');
 var coap = require('coap');
-var util = require('util');
-var xml2js = require('xml2js');
-var url = require('url');
-var xmlbuilder = require('xmlbuilder');
-var moment = require('moment');
-var ip = require("ip");
-
 
 global.NOPRINT = 'true';
-
 
 var _this = this;
 
@@ -41,10 +33,7 @@ var coap_state = 'init';
 var events = require('events');
 var coap_custom = new events.EventEmitter();
 
-
 var usecoapcbhost = 'localhost'; // pxycoap to mobius
-
-
 
 var coap_rsc_code = {
     '2000': '2.05',
@@ -102,40 +91,40 @@ exports.coap_watchdog = function () {
         if(pxycoap_server == null) {
             pxycoap_server = coap.createServer();
             pxycoap_server.listen(usecsebaseport, function() {
-                var options = {
-                    host: 'localhost',
-                    port: usecsebaseport,
-                    pathname: '/'+usecsebase,
-                    method: 'get',
-                    confirmable: 'true',
-                    options: {
-                        'Accept': 'application/json'
-                    }
-                };
-
-                var bodyString = '';
-                var responseBody = '';
-                var req = coap.request(options);
-                req.setOption("256", new Buffer(usecseid));      // X-M2M-Origin
-                req.setOption("257", new Buffer('hello'));    // X-M2M-RI
-                req.on('response', function (res) {
-                    res.on('data', function () {
-                        responseBody += res.payload.toString();
-                    });
-
-                    res.on('end', function () {
-                        if(res.code == '2.05') {
-                            coap_state = 'ready';
-                            console.log('[pxy_coap] coap ready');
-                        }
-                    });
-                });
-                req.on('error', function (e) {
-                    console.log(e);
-                });
-
-                req.write(bodyString);
-                req.end();
+                // var options = {
+                //     host: 'localhost',
+                //     port: usecsebaseport,
+                //     pathname: '/'+usecsebase,
+                //     method: 'get',
+                //     confirmable: 'false',
+                //     options: {
+                //         'Accept': 'application/json'
+                //     }
+                // };
+                //
+                // var bodyString = '';
+                // var responseBody = '';
+                // var req = coap.request(options);
+                // req.setOption("256", new Buffer(usecseid));      // X-M2M-Origin
+                // req.setOption("257", new Buffer('hello'));    // X-M2M-RI
+                // req.on('response', function (res) {
+                //     res.on('data', function () {
+                //         responseBody += res.payload.toString();
+                //     });
+                //
+                //     res.on('end', function () {
+                //         if(res.code == '2.05') {
+                //             coap_state = 'ready';
+                //             console.log('[pxy_coap] coap ready');
+                //         }
+                //     });
+                // });
+                // req.on('error', function (e) {
+                //     console.log(e);
+                // });
+                //
+                // req.write(bodyString);
+                // req.end();
             });
 
 
@@ -189,17 +178,20 @@ function coap_message_handler(request, response) {
 
     delete headers['X-M2M-TY'];
 
+    headers['binding'] = 'C';
+    headers['remoteaddress'] = request.rsinfo.address;
+
     var responseBody = '';
 
-    if(usesecure === 'disable') {
-        var options = {
-            hostname: usecoapcbhost,
-            port: usecsebaseport,
-            path: request.url,
-            method: request.method,
-            headers: headers
-        };
+    var options = {
+        hostname: usecoapcbhost,
+        port: usecsebaseport,
+        path: request.url,
+        method: request.method,
+        headers: headers
+    };
 
+    if(usesecure === 'disable') {
         var req = http.request(options, function (res) {
             res.setEncoding('utf8');
             res.on('data', function (chunk) {
@@ -213,6 +205,11 @@ function coap_message_handler(request, response) {
                 var rsc = new Buffer(2);
                 rsc.writeUInt16BE(parseInt(res.headers['x-m2m-rsc'], 'hex'), 0);
                 response.setOption("265", rsc);    // X-M2M-RSC
+                //var rqi = new Buffer(2);
+                //rqi.writeUInt16BE(parseInt(res.headers['x-m2m-ri'], 'hex'), 0);
+                //var rqi = res.headers['x-m2m-ri'];
+                var rqi = Buffer.from(res.headers['x-m2m-ri'], 'utf-8');
+                response.setOption("257", rqi);    // X-M2M-RQI
                 if (res.headers['content-type']) {
                     response.setOption("Content-Format", res.headers['content-type']);
                 }
@@ -222,14 +219,7 @@ function coap_message_handler(request, response) {
         });
     }
     else if(usesecure === 'enable') {
-        options = {
-            hostname: usecoapcbhost,
-            port: usecsebaseport,
-            path: request.url,
-            method: request.method,
-            headers: headers,
-            ca: fs.readFileSync('ca-crt.pem')
-        };
+        options.ca = fs.readFileSync('ca-crt.pem');
 
         req = https.request(options, function (res) {
             res.setEncoding('utf8');
@@ -244,6 +234,9 @@ function coap_message_handler(request, response) {
                 var rsc = new Buffer(2);
                 rsc.writeUInt16BE(parseInt(res.headers['x-m2m-rsc'], 'hex'), 0);
                 response.setOption("265", rsc);    // X-M2M-RSC
+                var rqi = new Buffer(2);
+                rqi.writeUInt16BE(parseInt(res.headers['x-m2m-ri'], 'hex'), 0);
+                response.setOption("257", rqi);    // X-M2M-RQI
                 if (res.headers['content-type']) {
                     response.setOption("Content-Format", res.headers['content-type']);
                 }
@@ -255,7 +248,7 @@ function coap_message_handler(request, response) {
     }
 
     req.on('error', function (e) {
-        if (e.message !== 'read ECONNRESET') {
+        if (e.message != 'read ECONNRESET') {
             console.log('[pxycoap - http_retrieve_CSEBase] problem with request: ' + e.message);
         }
     });
