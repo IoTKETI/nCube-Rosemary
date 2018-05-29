@@ -1,6 +1,6 @@
 {
-  "name": "Mobius",
-  "version": "2.3.0",
+  "name": "Resemary",
+  "version": "2.4.0",
   "dependencies": {
     "body-parser": "^1.18.2",
     "cbor": "^4.0.0",
@@ -26,8 +26,8 @@
     "xml2js": "^0.4.19",
     "xmlbuilder": "^9.0.7"
   },
-  "description": "Mobius",
-  "main": "mobius.js",
+  "description": "Rosemary",
+  "main": "rosemary.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
