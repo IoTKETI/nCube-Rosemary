@@ -222,15 +222,7 @@ function broadcast_ss_ri_cache() {
     }
 }
 
-var cbs_cache = {};
-
-global.get_cbs_cache = function (name) {
-    return cbs_cache[name];
-};
-
-global.get_all_cbs_cache = function () {
-    return cbs_cache;
-};
+global.cbs_cache = {};
 
 global.set_cbs_cache = function (name, val) {
     cbs_cache[name] = val;
@@ -372,6 +364,7 @@ function broadcast_hit_cache() {
 }
 
 var use_clustering = 1;
+var worker_init_count = 0;
 if (use_clustering) {
     if (cluster.isMaster) {
         console.log('CPU Count:', cpuCount);
@@ -380,59 +373,9 @@ if (use_clustering) {
         }
 
         cluster.on('message', function(worker, message) {
-            if(message.cmd === 'ss_ri:edit-request' ) {
-                ss_ri_cache[message.name] = message.val;
-                broadcast_ss_ri_cache();
-            }
-            else if(message.cmd === 'ss_ri:del-request' ) {
-                delete ss_ri_cache[message.name];
-                broadcast_ss_ri_cache();
-            }
-            else if (message.cmd === 'ss_ri:broadcast') {
-                broadcast_ss_ri_cache();
-            }
-            else if(message.cmd === 'cbs:edit-request' ) {
-                cbs_cache[message.name] = message.val;
-                broadcast_cbs_cache();
-                fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
-            }
-            else if(message.cmd === 'cbs:del-request' ) {
-                delete cbs_cache[message.name];
-                broadcast_cbs_cache();
-            }
-            else if (message.cmd === 'cbs:broadcast') {
-                broadcast_cbs_cache();
-            }
-            else if(message.cmd === 'hit:edit-request' ) {
-                hit_cache[message.name] = message.val;
-                broadcast_set_hit_cache(message.name, message.val);
-                fs.writeFileSync('hit.json', JSON.stringify(hit_cache, null, 4), 'utf8');
-            }
-            else if(message.cmd === 'hit:del-request' ) {
-                delete hit_cache[message.name];
-                broadcast_hit_cache();
-            }
-            else if (message.cmd === 'hit:broadcast') {
-                broadcast_hit_cache();
-            }
-            else if (message.cmd === 'hit:broadcast_set') {
-                broadcast_set_hit_cache(message.name, message.val);
-            }
-        });
-
-        cluster.on('death', function (worker) {
-            console.log('worker' + worker.pid + ' died --> start again');
-            cluster.fork();
-        });
-
-        db.connect(usedbhost, 3306, 'root', usedbpass, function (rsc) {
-            if (rsc == '1') {
-                cb.create(function (rsp) {
-                    console.log(JSON.stringify(rsp));
-
-                    wdt.set_wdt(require('shortid').generate(), 43200, del_req_resource);
-                    wdt.set_wdt(require('shortid').generate(), 86400, del_expired_resource);
-
+            if(message.cmd === 'init:notify' ) {
+                worker_init_count++;
+                if(worker_init_count >= cpuCount) {
                     try {
                         var hitStr = fs.readFileSync('hit.json', 'utf8');
                         hit_cache = JSON.parse(hitStr);
@@ -471,6 +414,62 @@ if (use_clustering) {
                         fs.writeFileSync('cbs_cache.json', JSON.stringify(_cbs_cache, null, 4), 'utf8');
                         broadcast_cbs_cache();
                     }
+                }
+            }
+            else if(message.cmd === 'ss_ri:edit-request' ) {
+                ss_ri_cache[message.name] = message.val;
+                broadcast_ss_ri_cache();
+            }
+            else if(message.cmd === 'ss_ri:del-request' ) {
+                delete ss_ri_cache[message.name];
+                broadcast_ss_ri_cache();
+            }
+            else if (message.cmd === 'ss_ri:broadcast') {
+                broadcast_ss_ri_cache();
+            }
+            else if(message.cmd === 'cbs:edit-request' ) {
+                cbs_cache[message.name] = message.val;
+                broadcast_cbs_cache();
+                fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
+            }
+            else if(message.cmd === 'cbs:del-request' ) {
+                delete cbs_cache[message.name];
+                broadcast_cbs_cache();
+                fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
+            }
+            else if (message.cmd === 'cbs:broadcast') {
+                broadcast_cbs_cache();
+            }
+            else if(message.cmd === 'hit:edit-request' ) {
+                hit_cache[message.name] = message.val;
+                broadcast_set_hit_cache(message.name, message.val);
+            }
+            else if(message.cmd === 'hit:del-request' ) {
+                delete hit_cache[message.name];
+                broadcast_hit_cache();
+                fs.writeFileSync('hit.json', JSON.stringify(hit_cache, null, 4), 'utf8');
+            }
+            else if (message.cmd === 'hit:broadcast') {
+                broadcast_hit_cache();
+            }
+            else if (message.cmd === 'hit:broadcast_set') {
+                broadcast_set_hit_cache(message.name, message.val);
+                fs.writeFileSync('hit.json', JSON.stringify(hit_cache, null, 4), 'utf8');
+            }
+        });
+
+        cluster.on('death', function (worker) {
+            console.log('worker' + worker.pid + ' died --> start again');
+            cluster.fork();
+        });
+
+        db.connect(usedbhost, 3306, 'root', usedbpass, function (rsc) {
+            if (rsc == '1') {
+                cb.create(function (rsp) {
+                    console.log(JSON.stringify(rsp));
+
+                    wdt.set_wdt(require('shortid').generate(), 43200, del_req_resource);
+                    wdt.set_wdt(require('shortid').generate(), 86400, del_expired_resource);
 
                     require('./pxy_mqtt');
                     require('./pxy_coap');
@@ -490,6 +489,10 @@ if (use_clustering) {
         //   app.use(bodyParser.urlencoded({ extended: true }));
         //   app.use(bodyParser.json({limit: '1mb', type: 'application/*+json' }));
         //   app.use(bodyParser.text({limit: '1mb', type: 'application/*+xml' }));
+
+        process.send({
+            cmd: 'init:notify'
+        });
 
         process.on('message', function (message) {
             if (message.cmd === 'ss_ri:edit') {
@@ -2315,16 +2318,14 @@ function lookup_delete(request, response) {
                                 results_comm = merge(results_comm, results_spec[0]);
 
                                 //var cbs_cache = JSON.parse(fs.readFileSync('cbs_cache.json', 'utf-8'));
-                                var _cbs_cache = get_all_cbs_cache();
-                                for(var idx in _cbs_cache) {
-                                    if(_cbs_cache.hasOwnProperty(idx)) {
+                                for(var idx in cbs_cache) {
+                                    if(cbs_cache.hasOwnProperty(idx)) {
                                         if(idx.includes(results_comm.ri)) {
-                                            delete _cbs_cache[idx];
+                                            delete cbs_cache[idx];
                                             del_cbs_cache(idx);
                                         }
                                     }
                                 }
-                                //fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
 
                                 resource.delete(request, response, results_comm);
                             });

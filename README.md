@@ -2,6 +2,9 @@
 ## Introduction
 The &Cube-Rosemary is the open source IoT gateway platform based on the oneM2M (http://www.oneM2M.org) standard. As one of the oneM2M platforms, &Cube-Rosemary provides common services functions to oneM2M applications and other oneM2M devices. So the &Cube-Rosemary can be used to provide proximity based IoT services. As defined in the specifications, &Cube-Rosemary as MN-CSE also provides interworking functionalities via IPE (Interworking Proxy Entity).
 
+## Version
+2.4.0
+
 ## System stucture
 &Cube-Rosemary implementation of oneM2M MN-CSE which interconnects ASN-CSE or ADN-AE to IN-CSE.
 <div align="center">

@@ -252,15 +252,11 @@ exports.build_asn = function(ri, callback) {
                             }
                             
                             if(parent_cbprotocol == 'http') {
-                                create_remoteCSE_http(parent_cbname, parent_cbhost, parent_cbhostport, rspObj, function (res, body) {
-                                    var rsc = res.statusCode;
-                                    console.log(rsc + ' : ' + body);
+                                create_remoteCSE_http(parent_cbname, parent_cbhost, parent_cbhostport, rspObj, function (rsc) {
                                     if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
                                         retrieve_CSEBase_http(parent_cbname, parent_cbhost, parent_cbhostport, function (rsc, jsonObj) {
                                             if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
-                                                create_remoteCSE_http(usecsebase, 'localhost', usecsebaseport, jsonObj, function (res, body) {
-                                                    var rsc = res.statusCode;
-                                                    console.log(rsc + ' : ' + body);
+                                                create_remoteCSE_http(usecsebase, 'localhost', usecsebaseport, jsonObj, function (rsc) {
                                                     if (rsc == 200 || rsc == 201 || rsc == 403 || rsc == 409) {
                                                         rspObj = {};
                                                         rspObj.rsc = '2000';

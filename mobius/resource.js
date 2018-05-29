@@ -422,7 +422,7 @@ function create_action_st(ri, ty, pi, callback) {
         }
     });
 }
-
+/*
 function create_action_cni(ty, pi, cni, cbs, mni, mbs, st, callback) {
     if (parseInt(cni, 10) > parseInt(mni, 10) || parseInt(cbs, 10) > parseInt(mbs, 10)) {
         db_sql.select_cs_parent(ty, pi, function (err, results_cs) { // select oldest
@@ -462,7 +462,7 @@ function create_action_cni(ty, pi, cni, cbs, mni, mbs, st, callback) {
         callback('1');
     }
 }
-
+*/
 function create_action(request, response, ty, resource_Obj, callback) {
     var rootnm = request.headers.rootnm;
     var body_Obj = {};
@@ -1177,7 +1177,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
         resource_Obj[rootnm].cnf = '';
     }
 
-    if (ty_list.includes(ty)) {
+    if (ty_list.includes(ty.toString())) {
         var mandatory_check_count = 0;
 
         // check Not_Present and check Option and check Mandatory
@@ -1247,7 +1247,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
     }
     else {
         body_Obj = {};
-        body_Obj['dbg'] = 'we do not support to update resource';
+        body_Obj['dbg'] = 'we do not support to create resource';
         responder.response_result(request, response, 405, body_Obj, 4005, request.url, body_Obj['dbg']);
         callback('0');
         return '0';
@@ -2694,7 +2694,7 @@ function update_action(request, response, ty, resource_Obj, callback) {
 function create_resource(request, response, ty, body_Obj, resource_Obj, callback) {
     var rootnm = request.headers.rootnm;
 
-    if (ty_list.includes(ty)) {
+    if (ty_list.includes(ty.toString())) {
         // check M
         for (var attr in create_m_attr_list[rootnm]) {
             if (create_m_attr_list[rootnm].hasOwnProperty(attr)) {
@@ -2738,7 +2738,7 @@ function create_resource(request, response, ty, body_Obj, resource_Obj, callback
     }
     else {
         body_Obj = {};
-        body_Obj['dbg'] = 'we do not support to update resource';
+        body_Obj['dbg'] = 'we do not support to create resource';
         responder.response_result(request, response, 405, body_Obj, 4005, request.url, body_Obj['dbg']);
         callback('0', body_Obj);
         return '0';
@@ -2760,7 +2760,7 @@ function check_acp_update_acpi(request, response, bodyObj, acpi, cr, callback) {
 function update_resource(request, response, ty, body_Obj, resource_Obj, callback) {
     var rootnm = request.headers.rootnm;
 
-    if (ty_list.includes(ty)) {
+    if (ty_list.includes(ty.toString())) {
         var mandatory_check_count = 0;
 
         // check Not Present and check Option and check Mandatory
