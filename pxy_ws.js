@@ -152,235 +152,7 @@ exports.ws_watchdog = function() {
 
 var ws_tid = require('shortid').generate();
 wdt.set_wdt(ws_tid, 2, _this.ws_watchdog);
-/*
-function make_json_obj(bodytype, str, callback) {
-    try {
-        if (bodytype == 'xml') {
-            var message = str;
-            var parser = new xml2js.Parser({explicitArray: false});
-            parser.parseString(message.toString(), function (err, result) {
-                if (err) {
-                    console.log('[ws make json obj] xml2js parser error]');
-                    callback('0');
-                }
-                else {
-                    for (var prop in result) {
-                        if (result.hasOwnProperty(prop)) {
-                            for (var attr in result[prop]) {
-                                if (result[prop].hasOwnProperty(attr)) {
-                                    if (attr == '$') {
-                                        delete result[prop][attr];
-                                    }
-                                    else if (attr == 'pc') {
-                                        for (var attr2 in result[prop][attr]) {
-                                            if (result[prop][attr].hasOwnProperty(attr2)) {
-                                                if (result[prop][attr][attr2].at) {
-                                                    result[prop][attr][attr2].at = result[prop][attr][attr2].at.split(' ');
-                                                }
 
-                                                if (result[prop][attr][attr2].aa) {
-                                                    result[prop][attr][attr2].aa = result[prop][attr][attr2].aa.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].poa) {
-                                                    result[prop][attr][attr2].poa = result[prop][attr][attr2].poa.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].lbl) {
-                                                    result[prop][attr][attr2].lbl = result[prop][attr][attr2].lbl.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].acpi) {
-                                                    result[prop][attr][attr2].acpi = result[prop][attr][attr2].acpi.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].srt) {
-                                                    result[prop][attr][attr2].srt = result[prop][attr][attr2].srt.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].nu) {
-                                                    result[prop][attr][attr2].nu = result[prop][attr][attr2].nu.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].enc) {
-                                                    if (result[prop][attr][attr2].enc.net) {
-                                                        result[prop][attr][attr2].enc.net = result[prop][attr][attr2].enc.net.split(' ');
-                                                    }
-                                                }
-
-                                                if (result[prop][attr][attr2].pv) {
-                                                    if (result[prop][attr][attr2].pv.acr) {
-                                                        if (!Array.isArray(result[prop][attr][attr2].pv.acr)) {
-                                                            var temp = result[prop][attr][attr2].pv.acr;
-                                                            result[prop][attr][attr2].pv.acr = [];
-                                                            result[prop][attr][attr2].pv.acr[0] = temp;
-                                                        }
-
-                                                        for (var acr_idx in result[prop][attr][attr2].pv.acr) {
-                                                            if (result[prop][attr][attr2].pv.acr.hasOwnProperty(acr_idx)) {
-                                                                if (result[prop][attr][attr2].pv.acr[acr_idx].acor) {
-                                                                    result[prop][attr][attr2].pv.acr[acr_idx].acor = result[prop][attr][attr2].pv.acr[acr_idx].acor.split(' ');
-                                                                }
-
-                                                                if (result[prop][attr][attr2].pv.acr[acr_idx].hasOwnProperty('acco')) {
-                                                                    var acco = result[prop][attr][attr2].pv.acr[acr_idx].acco;
-
-                                                                    if (!Array.isArray(acco)) {
-                                                                        temp = acco;
-                                                                        acco = [];
-                                                                        acco[0] = temp;
-                                                                    }
-
-                                                                    for(var acco_idx in acco) {
-                                                                        if(acco.hasOwnProperty(acco_idx)) {
-                                                                            if (acco[acco_idx].hasOwnProperty('acip')) {
-                                                                                if (acco[acco_idx].acip.hasOwnProperty('ipv4')) {
-                                                                                    if (getType(acco[acco_idx].acip['ipv4']) == 'string') {
-                                                                                        acco[acco_idx].acip['ipv4'] = acco[acco_idx].acip.ipv4.split(' ');
-                                                                                    }
-                                                                                }
-                                                                                else if (acco[acco_idx].acip.hasOwnProperty('ipv6')) {
-                                                                                    if (getType(acco[acco_idx].acip['ipv6']) == 'string') {
-                                                                                        acco[acco_idx].acip['ipv6'] = acco[acco_idx].acip.ipv6.split(' ');
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            else if (acco[acco_idx].hasOwnProperty('actw')) {
-                                                                                if (getType(acco[acco_idx].actw) == 'string') {
-                                                                                    temp = acco[acco_idx].actw;
-                                                                                    acco[acco_idx]['actw'] = [];
-                                                                                    acco[acco_idx].actw[0] = temp;
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                if (result[prop][attr][attr2].pvs) {
-                                                    if (result[prop][attr][attr2].pvs.acr) {
-                                                        if (!Array.isArray(result[prop][attr][attr2].pvs.acr)) {
-                                                            temp = result[prop][attr][attr2].pvs.acr;
-                                                            result[prop][attr][attr2].pvs.acr = [];
-                                                            result[prop][attr][attr2].pvs.acr[0] = temp;
-                                                        }
-
-                                                        for (acr_idx in result[prop][attr][attr2].pvs.acr) {
-                                                            if (result[prop][attr][attr2].pvs.acr.hasOwnProperty(acr_idx)) {
-                                                                if (result[prop][attr][attr2].pvs.acr[acr_idx].acor) {
-                                                                    result[prop][attr][attr2].pvs.acr[acr_idx].acor = result[prop][attr][attr2].pvs.acr[acr_idx].acor.split(' ');
-                                                                }
-
-                                                                if (result[prop][attr][attr2].pvs.acr[acr_idx].hasOwnProperty('acco')) {
-                                                                    acco = result[prop][attr][attr2].pvs.acr[acr_idx].acco;
-
-                                                                    if (!Array.isArray(acco)) {
-                                                                        temp = acco;
-                                                                        acco = [];
-                                                                        acco[0] = temp;
-                                                                    }
-
-                                                                    for(acco_idx in acco) {
-                                                                        if(acco.hasOwnProperty(acco_idx)) {
-                                                                            if (acco[acco_idx].hasOwnProperty('acip')) {
-                                                                                if (acco[acco_idx].acip.hasOwnProperty('ipv4')) {
-                                                                                    if (getType(acco[acco_idx].acip['ipv4']) == 'string') {
-                                                                                        acco[acco_idx].acip['ipv4'] = acco[acco_idx].acip.ipv4.split(' ');
-                                                                                    }
-                                                                                }
-                                                                                else if (acco[acco_idx].acip.hasOwnProperty('ipv6')) {
-                                                                                    if (getType(acco[acco_idx].acip['ipv6']) == 'string') {
-                                                                                        acco[acco_idx].acip['ipv6'] = acco[acco_idx].acip.ipv6.split(' ');
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                            else if (acco[acco_idx].hasOwnProperty('actw')) {
-                                                                                if (getType(acco[acco_idx].actw) == 'string') {
-                                                                                    temp = acco[acco_idx].actw;
-                                                                                    acco[acco_idx]['actw'] = [];
-                                                                                    acco[acco_idx].actw[0] = temp;
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-
-                                                if (result[prop][attr][attr2].mid) {
-                                                    result[prop][attr][attr2].mid = result[prop][attr][attr2].mid.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2].macp) {
-                                                    result[prop][attr][attr2].macp = result[prop][attr][attr2].macp.split(' ');
-                                                }
-
-                                                if (result[prop][attr][attr2]['$']) {
-                                                    if (result[prop][attr][attr2]['$'].rn && result[prop][attr][attr2]['$'].rn != '') {
-                                                        result[prop][attr][attr2].rn = result[prop][attr][attr2]['$'].rn;
-                                                        delete result[prop][attr][attr2]['$'];
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    callback('1', result);
-                }
-            });
-        }
-        else if (bodytype === 'cbor') {
-            cbor.decodeFirst(str, function(err, result) {
-                if (err) {
-                    console.log('[mqtt make json obj] cbor parser error]');
-                }
-                else {
-                    if(result['m2m:rqp'] == null) {
-                        if(result['op'] == null) {
-                            callback('0');
-                        }
-                        else {
-                            result['m2m:rqp'] = result;
-                            callback('1', result);
-                        }
-                    }
-                    else {
-                        callback('1', result);
-                    }
-                }
-            });
-        }
-        else {
-            var result = JSON.parse(str);
-
-            if(result['m2m:rqp'] == null) {
-                if(result['op'] == null) {
-                    callback('0');
-                }
-                else {
-                    result['m2m:rqp'] = result;
-                    callback('1', result);
-                }
-            }
-            else {
-                callback('1', result);
-            }
-        }
-    }
-    catch (e) {
-        console.error(e.message);
-        callback('0');
-    }
-}
-*/
 function ws_message_handler(message) {
     var _this = this;
     if(message.type === 'utf8') {
@@ -399,82 +171,102 @@ function ws_message_handler(message) {
         });
     }
     else if(message.type === 'binary') {
+        // Buffer.from('80', 'hex').toString('utf8');
+        // Buffer.from(message).toString('hex');
+        console.log(message.binaryData.toString('hex'));
 
+        //var data = Buffer.from(message);
+
+        //Array.prototype.map.call(new Uint8Array(data), x => ('00' + x.toString(16)).slice(-2)).join('').match(/[a-fA-F0-9]{2}/g).reverse().join('');
+
+        var protocol_arr = this.protocol.split('.');
+        var bodytype = protocol_arr[protocol_arr.length-1];
+
+        var str = message.binaryData.toString('hex');
+        make_json_obj(bodytype, str, function(rsc, result) {
+            if(rsc == '1') {
+                ws_message_action(_this, bodytype, result);
+            }
+            else {
+                ws_response(_this, 4000, '', '', '', 'to parsing error', bodytype);
+            }
+        });
+
+        // var protocol_arr = this.protocol.split('.');
+        // var bodytype = protocol_arr[protocol_arr.length-1];
+        //
+        // make_json_obj(bodytype, message.utf8Data.toString(), function(rsc, result) {
+        //     if(rsc == '1') {
+        //         ws_message_action(_this, bodytype, result);
+        //     }
+        //     else {
+        //         ws_response(_this, 4000, '', '', '', 'to parsing error', bodytype);
+        //     }
+        // });
     }
 }
 
 function ws_message_action(connection, bodytype, jsonObj) {
     if (jsonObj['m2m:rqp'] != null) {
-        var op = (jsonObj['m2m:rqp'].op == null) ? '' : jsonObj['m2m:rqp'].op;
-        var to = (jsonObj['m2m:rqp'].to == null) ? '' : jsonObj['m2m:rqp'].to;
-        if(to.split(usespid + '/' + usecseid + '/' + usecsebase)[0] == '') { // Absolute
-            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
-            to='/'+usecsebase;
-            for(var i = 1; i < to_arr.length; i++) {
-                to += '/';
-                to += to_arr[i];
-            }
-        }
-        else if(to.split(usecseid + '/' + usecsebase)[0] == '') { // SP Relative
-            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
-            to='/'+usecsebase;
-            for(i = 1; i < to_arr.length; i++) {
-                to += '/';
-                to += to_arr[i];
-            }
-        }
-        else if(to.split(usecsebase)[0] == '') { // CSE Relative
-            var to_arr = to.split(usespid + '/' + usecseid + '/' + usecsebase);
-            to='/'+usecsebase;
-            for(i = 1; i < to_arr.length; i++) {
-                to += '/';
-                to += to_arr[i];
-            }
-        }
-        var fr = (jsonObj['m2m:rqp'].fr == null) ? '' : jsonObj['m2m:rqp'].fr;
-        var rqi = (jsonObj['m2m:rqp'].rqi == null) ? '' : jsonObj['m2m:rqp'].rqi;
-        var ty = (jsonObj['m2m:rqp'].ty == null) ? '' : jsonObj['m2m:rqp'].ty.toString();
-        var pc = (jsonObj['m2m:rqp'].pc == null) ? '' : jsonObj['m2m:rqp'].pc;
+        console.log('m2m:rqp tag of ws message is removed');
 
-        if(jsonObj['m2m:rqp'].fc) {
+        var res_body = {};
+        res_body['m2m:dbg'] = 'm2m:rqp tag of ws message is removed';
+
+        ws_response(connection, 4000, "", usecseid, "", JSON.parse(res_body), bodytype);
+    }
+    else {
+        var op = (jsonObj.op == null) ? '' : jsonObj.op;
+        var to = (jsonObj.to == null) ? '' : jsonObj.to;
+
+        to = to.replace(usespid + usecseid + '/', '/');
+        to = to.replace(usecseid + '/', '/');
+
+        if(to.charAt(0) != '/') {
+            to = '/' + to;
+        }
+
+        var fr = (jsonObj.fr == null) ? '' : jsonObj.fr;
+        var rqi = (jsonObj.rqi == null) ? '' : jsonObj.rqi;
+        var ty = (jsonObj.ty == null) ? '' : jsonObj.ty.toString();
+        var pc = (jsonObj.pc == null) ? '' : jsonObj.pc;
+
+        if(jsonObj.fc) {
             var query_count = 0;
-            for(var fc_idx in jsonObj['m2m:rqp'].fc) {
-                if(jsonObj['m2m:rqp'].fc.hasOwnProperty(fc_idx)) {
+            for(var fc_idx in jsonObj.fc) {
+                if(jsonObj.fc.hasOwnProperty(fc_idx)) {
                     if(query_count == 0) {
                         to += '?';
+                        query_count++;
                     }
                     else {
                         to += '&';
+                        query_count++;
                     }
                     to += fc_idx;
                     to += '=';
-                    to += jsonObj['m2m:rqp'].fc[fc_idx].toString();
+                    to += jsonObj.fc[fc_idx].toString();
                 }
             }
         }
 
         try {
-            if (to.split('/')[1].split('?')[0] == usecsebase) {
+            //if (to.split('/')[1].split('?')[0] == usecsebase) {
                 ws_binding(op, to, fr, rqi, ty, pc, bodytype, function (res, res_body) {
                     if (res_body == '') {
                         res_body = '{}';
                     }
                     ws_response(connection, res.headers['x-m2m-rsc'], to, usecseid, rqi, JSON.parse(res_body), bodytype);
                 });
-            }
-            else {
-                ws_response(connection, 4004, fr, usecseid, rqi, 'this is not MN-CSE, csebase do not exist', bodytype);
-            }
+            // }
+            // else {
+            //     ws_response(connection, 4004, fr, usecseid, rqi, 'this is not MN-CSE, csebase do not exist', bodytype);
+            // }
         }
         catch (e) {
             console.error(e);
             ws_response(connection, 5000, fr, usecseid, rqi, 'to parsing error', bodytype);
         }
-    }
-    else {
-        console.log('ws message tag is not different : m2m:rqp');
-
-        ws_response(connection, 4000, "", usecseid, "", '\"m2m:dbg\":\"ws message tag is different : m2m:rqp\"', bodytype);
     }
 }
 
@@ -514,8 +306,10 @@ function ws_binding(op, to, fr, rqi, ty, pc, bodytype, callback) {
             'Accept': 'application/json',
             'X-M2M-Origin': fr,
             'Content-Type': content_type,
-            'binding': 'W'
-        }
+            'binding': 'W',
+            'X-M2M-RVI': uservi
+        },
+        rejectUnauthorized: false
     };
 
     if(usesecure == 'disable') {
@@ -569,8 +363,8 @@ function ws_response(connection, rsc, to, fr, rqi, inpc, bodytype) {
     //rsp_message['m2m:rsp'].fr = fr;
 
     rsp_message['m2m:rsp'].rqi = rqi;
+    rsp_message['m2m:rsp'].rvi = uservi;
     rsp_message['m2m:rsp'].pc = inpc;
-
 
     if (bodytype === 'xml') {
         rsp_message['m2m:rsp']['@'] = {
@@ -603,9 +397,10 @@ function ws_response(connection, rsc, to, fr, rqi, inpc, bodytype) {
 
         connection.sendUTF(bodyString.toString());
     }
-    else if (bodytype === 'cbor') { // 'json'
+    else if (bodytype === 'cbor') { // 'cbor'
         bodyString = cbor.encode(rsp_message['m2m:rsp']).toString('hex');
-        connection.sendUTF(bodyString);
+        var bytearray = Buffer.from(bodyString, 'hex');
+        connection.send(bytearray);
     }
     else { // 'json'
         connection.sendUTF(JSON.stringify(rsp_message['m2m:rsp']));
@@ -626,7 +421,8 @@ function http_retrieve_CSEBase(callback) {
             headers: {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
-                'X-M2M-Origin': usecseid
+                'X-M2M-Origin': usecseid,
+                'X-M2M-RVI': uservi
             }
         };
 
@@ -650,7 +446,8 @@ function http_retrieve_CSEBase(callback) {
             headers: {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
-                'X-M2M-Origin': usecseid
+                'X-M2M-Origin': usecseid,
+                'X-M2M-RVI': uservi
             },
             ca: fs.readFileSync('ca-crt.pem')
         };

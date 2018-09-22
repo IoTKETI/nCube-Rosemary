@@ -202,16 +202,6 @@ function broadcast_ss_ri_cache() {
                     cmd: 'ss_ri:edit',
                     data: ss_ri_cache
                 });
-
-                // for(var idx in ss_ri_cache) {
-                //     if(ss_ri_cache.hasOwnProperty(idx)) {
-                //         worker.send({
-                //             cmd: 'ss_ri:edit',
-                //             name: idx,
-                //             val: ss_ri_cache[idx]
-                //         });
-                //     }
-                // }
             }
         }
     }
@@ -229,22 +219,43 @@ global.set_cbs_cache = function (name, val) {
 
     if ( cluster.isWorker ) {
         process.send({
-            cmd: 'cbs:edit-request',
+            cmd: 'cbs:broadcast_set',
             name: name,
             val: val
         });
     }
     else {
-        broadcast_cbs_cache();
+        broadcast_set_cbs_cache(name, val);
     }
 };
+
+function broadcast_set_cbs_cache(name, val) {
+    if ( cluster.isMaster ) {
+        for (var id in cluster.workers) {
+            if(cluster.workers.hasOwnProperty(id)) {
+                var worker = cluster.workers[id];
+
+                worker.send({
+                    cmd: 'cbs:edit_set',
+                    name: name,
+                    val: val
+                });
+            }
+        }
+    }
+    else {
+        process.send({
+            cmd: 'cbs:broadcast_set'
+        });
+    }
+}
 
 global.del_cbs_cache = function (name) {
     delete cbs_cache[name];
 
     if ( cluster.isWorker ) {
         process.send({
-            cmd: 'cbs:del-request',
+            cmd: 'cbs:broadcast',
             name: name
         });
     }
@@ -263,16 +274,6 @@ function broadcast_cbs_cache() {
                     cmd: 'cbs:edit',
                     data: cbs_cache
                 });
-
-                // for(var idx in cbs_cache) {
-                //     if(cbs_cache.hasOwnProperty(idx)) {
-                //         worker.send({
-                //             cmd: 'cbs:edit',
-                //             name: idx,
-                //             val: cbs_cache[idx]
-                //         });
-                //     }
-                // }
             }
         }
     }
@@ -298,27 +299,13 @@ global.set_hit_cache = function (name, val) {
 
     if ( cluster.isWorker ) {
         process.send({
-            cmd: 'hit:edit-request',
+            cmd: 'hit:broadcast_set',
             name: name,
             val: val
         });
     }
     else {
         broadcast_set_hit_cache(name, val);
-    }
-};
-
-global.del_hit_cache = function (name) {
-    delete hit_cache[name];
-
-    if ( cluster.isWorker ) {
-        process.send({
-            cmd: 'hit:del-request',
-            name: name
-        });
-    }
-    else {
-        broadcast_hit_cache();
     }
 };
 
@@ -404,16 +391,8 @@ if (use_clustering) {
                         broadcast_hit_cache();
                     }
 
-                    try {
-                        var cbsCacheStr = fs.readFileSync('cbs_cache.json', 'utf8');
-                        cbs_cache = JSON.parse(cbsCacheStr);
-                        broadcast_cbs_cache();
-                    }
-                    catch (e) {
-                        var _cbs_cache = {};
-                        fs.writeFileSync('cbs_cache.json', JSON.stringify(_cbs_cache, null, 4), 'utf8');
-                        broadcast_cbs_cache();
-                    }
+                    cbs_cache = {};
+                    broadcast_cbs_cache();
                 }
             }
             else if(message.cmd === 'ss_ri:edit-request' ) {
@@ -427,34 +406,24 @@ if (use_clustering) {
             else if (message.cmd === 'ss_ri:broadcast') {
                 broadcast_ss_ri_cache();
             }
-            else if(message.cmd === 'cbs:edit-request' ) {
+            else if(message.cmd === 'cbs:broadcast_set' ) {
                 cbs_cache[message.name] = message.val;
-                broadcast_cbs_cache();
-                fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
-            }
-            else if(message.cmd === 'cbs:del-request' ) {
-                delete cbs_cache[message.name];
-                broadcast_cbs_cache();
-                fs.writeFileSync('cbs_cache.json', JSON.stringify(cbs_cache, null, 4), 'utf8');
+                console.log(message.name + ' : ' + JSON.stringify(cbs_cache[message.name]));
+                broadcast_set_cbs_cache(message.name, message.val);
             }
             else if (message.cmd === 'cbs:broadcast') {
+                delete cbs_cache[message.name];
                 broadcast_cbs_cache();
             }
-            else if(message.cmd === 'hit:edit-request' ) {
+            else if (message.cmd === 'hit:broadcast_set') {
                 hit_cache[message.name] = message.val;
-                broadcast_set_hit_cache(message.name, message.val);
-            }
-            else if(message.cmd === 'hit:del-request' ) {
-                delete hit_cache[message.name];
-                broadcast_hit_cache();
+                console.log(message.name + ' : ' + JSON.stringify(hit_cache[message.name]));
                 fs.writeFileSync('hit.json', JSON.stringify(hit_cache, null, 4), 'utf8');
+                broadcast_set_hit_cache(message.name, message.val);
             }
             else if (message.cmd === 'hit:broadcast') {
+                delete hit_cache[message.name];
                 broadcast_hit_cache();
-            }
-            else if (message.cmd === 'hit:broadcast_set') {
-                broadcast_set_hit_cache(message.name, message.val);
-                fs.writeFileSync('hit.json', JSON.stringify(hit_cache, null, 4), 'utf8');
             }
         });
 
@@ -500,18 +469,22 @@ if (use_clustering) {
                 ss_ri_cache = message.data;
                 //console.log(ss_ri_cache);
             }
+            else if (message.cmd === 'cbs:edit_set') {
+                cbs_cache[message.name] = message.val;
+                //console.log(message.val);
+            }
             else if (message.cmd === 'cbs:edit') {
                 //cbs_cache[message.name] = message.val;
                 cbs_cache = message.data;
                 //console.log(cbs_cache);
             }
-            else if (message.cmd === 'hit:edit') {
-                hit_cache = message.data;
-                console.log(hit_cache);
-            }
             else if (message.cmd === 'hit:edit_set') {
                 hit_cache[message.name] = message.val;
                 //console.log(message.val);
+            }
+            else if (message.cmd === 'hit:edit') {
+                hit_cache = message.data;
+                //console.log(hit_cache);
             }
         });
 
@@ -681,169 +654,6 @@ global.make_json_obj = function(bodytype, str, callback) {
                             }
                         }
                     }
-
-                    // for (var prop in result) {
-                    //     if (result.hasOwnProperty(prop)) {
-                    //         for (var attr in result[prop]) {
-                    //             if (result[prop].hasOwnProperty(attr)) {
-                    //                 if (attr == '$') {
-                    //                     delete result[prop][attr];
-                    //                 }
-                    //                 else if (attr == 'pc') {
-                    //                     for (var attr2 in result[prop][attr]) {
-                    //                         if (result[prop][attr].hasOwnProperty(attr2)) {
-                    //                             if (result[prop][attr][attr2].at) {
-                    //                                 result[prop][attr][attr2].at = result[prop][attr][attr2].at.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].aa) {
-                    //                                 result[prop][attr][attr2].aa = result[prop][attr][attr2].aa.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].poa) {
-                    //                                 result[prop][attr][attr2].poa = result[prop][attr][attr2].poa.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].lbl) {
-                    //                                 result[prop][attr][attr2].lbl = result[prop][attr][attr2].lbl.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].acpi) {
-                    //                                 result[prop][attr][attr2].acpi = result[prop][attr][attr2].acpi.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].srt) {
-                    //                                 result[prop][attr][attr2].srt = result[prop][attr][attr2].srt.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].nu) {
-                    //                                 result[prop][attr][attr2].nu = result[prop][attr][attr2].nu.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].enc) {
-                    //                                 if (result[prop][attr][attr2].enc.net) {
-                    //                                     result[prop][attr][attr2].enc.net = result[prop][attr][attr2].enc.net.split(' ');
-                    //                                 }
-                    //                             }
-                    //
-                    //                             if (attr == 'pv' || attr == 'pvs') {
-                    //                                 if (body_Obj[prop][attr]) {
-                    //                                     if (body_Obj[prop][attr].acr) {
-                    //                                         if (!Array.isArray(body_Obj[prop][attr].acr)) {
-                    //                                             temp = body_Obj[prop][attr].acr;
-                    //                                             body_Obj[prop][attr].acr = [];
-                    //                                             body_Obj[prop][attr].acr[0] = temp;
-                    //                                         }
-                    //
-                    //                                         for (var acr_idx in body_Obj[prop][attr].acr) {
-                    //                                             if (body_Obj[prop][attr].acr.hasOwnProperty(acr_idx)) {
-                    //                                                 if (body_Obj[prop][attr].acr[acr_idx].acor) {
-                    //                                                     body_Obj[prop][attr].acr[acr_idx].acor = body_Obj[prop][attr].acr[acr_idx].acor.split(' ');
-                    //                                                 }
-                    //
-                    //                                                 if (body_Obj[prop][attr].acr[acr_idx].hasOwnProperty('acco')) {
-                    //                                                     if (!Array.isArray(body_Obj[prop][attr].acr[acr_idx].acco)) {
-                    //                                                         temp = body_Obj[prop][attr].acr[acr_idx].acco;
-                    //                                                         body_Obj[prop][attr].acr[acr_idx].acco = [];
-                    //                                                         body_Obj[prop][attr].acr[acr_idx].acco[0] = temp;
-                    //                                                     }
-                    //
-                    //                                                     var acco = body_Obj[prop][attr].acr[acr_idx].acco;
-                    //                                                     for(var acco_idx in acco) {
-                    //                                                         if(acco.hasOwnProperty(acco_idx)) {
-                    //                                                             if (acco[acco_idx].hasOwnProperty('acip')) {
-                    //                                                                 if (acco[acco_idx].acip.hasOwnProperty('ipv4')) {
-                    //                                                                     if (getType(acco[acco_idx].acip['ipv4']) == 'string') {
-                    //                                                                         acco[acco_idx].acip['ipv4'] = acco[acco_idx].acip.ipv4.split(' ');
-                    //                                                                     }
-                    //                                                                 }
-                    //                                                                 else if (acco[acco_idx].acip.hasOwnProperty('ipv6')) {
-                    //                                                                     if (getType(acco[acco_idx].acip['ipv6']) == 'string') {
-                    //                                                                         acco[acco_idx].acip['ipv6'] = acco[acco_idx].acip.ipv6.split(' ');
-                    //                                                                     }
-                    //                                                                 }
-                    //                                                             }
-                    //                                                             if (acco[acco_idx].hasOwnProperty('actw')) {
-                    //                                                                 if (getType(acco[acco_idx].actw) == 'string') {
-                    //                                                                     temp = acco[acco_idx].actw;
-                    //                                                                     acco[acco_idx]['actw'] = [];
-                    //                                                                     acco[acco_idx].actw[0] = temp;
-                    //                                                                 }
-                    //                                                             }
-                    //                                                         }
-                    //                                                     }
-                    //                                                 }
-                    //                                             }
-                    //                                         }
-                    //                                     }
-                    //
-                    //                                     if (body_Obj[prop][attr].acr == '') {
-                    //                                         body_Obj[prop][attr].acr = [];
-                    //                                     }
-                    //
-                    //                                     if (body_Obj[prop][attr].acr == '[]') {
-                    //                                         body_Obj[prop][attr].acr = [];
-                    //                                     }
-                    //                                 }
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].pv) {
-                    //                                 if (result[prop][attr][attr2].pv.acr) {
-                    //                                     if (!Array.isArray(result[prop][attr][attr2].pv.acr)) {
-                    //                                         var temp = result[prop][attr][attr2].pv.acr;
-                    //                                         result[prop][attr][attr2].pv.acr = [];
-                    //                                         result[prop][attr][attr2].pv.acr[0] = temp;
-                    //                                     }
-                    //
-                    //                                     for (var acr_idx in result[prop][attr][attr2].pv.acr) {
-                    //                                         if (result[prop][attr][attr2].pv.acr.hasOwnProperty(acr_idx)) {
-                    //                                             if (result[prop][attr][attr2].pv.acr[acr_idx].acor) {
-                    //                                                 result[prop][attr][attr2].pv.acr[acr_idx].acor = result[prop][attr][attr2].pv.acr[acr_idx].acor.split(' ');
-                    //                                             }
-                    //                                         }
-                    //                                     }
-                    //                                 }
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].pvs) {
-                    //                                 if (result[prop][attr][attr2].pvs.acr) {
-                    //                                     if (!Array.isArray(result[prop][attr][attr2].pvs.acr)) {
-                    //                                         temp = result[prop][attr][attr2].pvs.acr;
-                    //                                         result[prop][attr][attr2].pvs.acr = [];
-                    //                                         result[prop][attr][attr2].pvs.acr[0] = temp;
-                    //                                     }
-                    //
-                    //                                     for (acr_idx in result[prop][attr][attr2].pvs.acr) {
-                    //                                         if (result[prop][attr][attr2].pvs.acr.hasOwnProperty(acr_idx)) {
-                    //                                             if (result[prop][attr][attr2].pvs.acr[acr_idx].acor) {
-                    //                                                 result[prop][attr][attr2].pvs.acr[acr_idx].acor = result[prop][attr][attr2].pvs.acr[acr_idx].acor.split(' ');
-                    //                                             }
-                    //                                         }
-                    //                                     }
-                    //                                 }
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].mid) {
-                    //                                 result[prop][attr][attr2].mid = result[prop][attr][attr2].mid.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2].macp) {
-                    //                                 result[prop][attr][attr2].macp = result[prop][attr][attr2].macp.split(' ');
-                    //                             }
-                    //
-                    //                             if (result[prop][attr][attr2]['$']) {
-                    //                                 if (result[prop][attr][attr2]['$'].rn && result[prop][attr][attr2]['$'].rn != '') {
-                    //                                     result[prop][attr][attr2].rn = result[prop][attr][attr2]['$'].rn;
-                    //                                     delete result[prop][attr][attr2]['$'];
-                    //                                 }
-                    //                             }
-                    //                         }
-                    //                     }
-                    //                 }
-                    //             }
-                    //         }
-                    //     }
-                    // }
                     callback('1', result);
                 }
             });
@@ -851,7 +661,7 @@ global.make_json_obj = function(bodytype, str, callback) {
         else if (bodytype === 'cbor') {
             cbor.decodeFirst(str, function(err, result) {
                 if (err) {
-                    console.log('[mqtt make json obj] cbor parser error]');
+                    console.log('cbor parser error]');
                 }
                 else {
                     callback('1', result);
@@ -874,7 +684,7 @@ global.make_json_arraytype = function (body_Obj) {
         if (body_Obj.hasOwnProperty(prop)) {
             for (var attr in body_Obj[prop]) {
                 if (body_Obj[prop].hasOwnProperty(attr)) {
-                    if (attr == 'aa' || attr == 'at' || attr == 'poa' || attr == 'lbl' || attr == 'acpi' || attr == 'srt' || attr == 'nu' || attr == 'mid' || attr == 'macp' || attr == 'rels') {
+                    if (attr == 'srv' || attr == 'aa' || attr == 'at' || attr == 'poa' || attr == 'lbl' || attr == 'acpi' || attr == 'srt' || attr == 'nu' || attr == 'mid' || attr == 'macp' || attr == 'rels') {
                         if (body_Obj[prop][attr]) {
                             body_Obj[prop][attr] = body_Obj[prop][attr].split(' ');
                         }
@@ -1091,7 +901,24 @@ function check_http(request, response, callback) {
     if (request.query.real == 4) {
         if (request.method == 'POST' || request.method == 'PUT') {
             try {
-                var ty = request.headers['content-type'].split(';')[1].split('ty=')[1];
+                var content_type = request.headers['content-type'].split(';');
+                var ty = '99';
+                for(var i in content_type) {
+                    if(content_type.hasOwnProperty(i)) {
+                        var ty_arr = content_type[i].replace(/ /g, '').split('=');
+                        if(ty_arr[0].replace(/ /g, '') == 'ty') {
+                            ty = ty_arr[1].replace(' ', '');
+                            break;
+                        }
+                    }
+                }
+
+                if(ty == '99') {
+                    responder.error_result(request, response, 400, 4000, 'ty is none');
+                    callback('0', body_Obj, request, response);
+                    return '0';
+                }
+
                 body_Obj = JSON.parse(request.body.toString());
                 var rootnm = Object.keys(body_Obj)[0].split(':')[1];
                 body_Obj[rootnm] = body_Obj[Object.keys(body_Obj)[0]];
@@ -1118,6 +945,16 @@ function check_http(request, response, callback) {
         callback('0', body_Obj, request, response);
         return '0';
     }
+
+    // Check X-M2M-RVI Header
+    if ((request.headers['x-m2m-rvi'] == null)) {
+        // responder.error_result(request, response, 400, 4000, 'BAD REQUEST: X-M2M-RI is none');
+        // callback('0', body_Obj, request, response);
+        // return '0';
+        // todo: RVI check
+        request.headers['x-m2m-rvi'] = uservi;
+    }
+
 
     // Check X-M2M-Origin Header
 
@@ -1161,7 +998,22 @@ function check_http(request, response, callback) {
             if (rsc == '1') {
                 if (request.method == 'POST') {
                     try {
-                        var ty = content_type[1].split('=')[1];
+                        var ty = '99';
+                        for(var i in content_type) {
+                            if(content_type.hasOwnProperty(i)) {
+                                var ty_arr = content_type[i].replace(/ /g, '').split('=');
+                                if(ty_arr[0].replace(/ /g, '') == 'ty') {
+                                    ty = ty_arr[1].replace(' ', '');
+                                    break;
+                                }
+                            }
+                        }
+
+                        if(ty == '99') {
+                            responder.error_result(request, response, 400, 4000, 'ty is none');
+                            callback('0', body_Obj, request, response);
+                            return '0';
+                        }
 
                         if(request.headers['x-m2m-origin'] == null) {
                             if (ty == '2' || ty == '16') {
@@ -1326,9 +1178,8 @@ function check_http(request, response, callback) {
                         for (var attr in body_Obj[prop]) {
                             if (body_Obj[prop].hasOwnProperty(attr)) {
                                 if(attr == 'aa' || attr == 'at' || attr == 'poa' || attr == 'acpi' || attr == 'srt' ||
-                                    attr == 'nu' || attr == 'mid' || attr == 'macp' || attr == 'rels' || attr == 'rqps') {
+                                    attr == 'nu' || attr == 'mid' || attr == 'macp' || attr == 'rels' || attr == 'rqps' || attr == 'srv') {
                                     if (!Array.isArray(body_Obj[prop][attr])) {
-                                        if(body_Objbody_Obj[prop][attr])
                                         body_Obj = {};
                                         body_Obj['dbg'] = attr + ' attribute should be json array format';
                                         responder.response_result(request, response, 400, body_Obj, 4000, request.url, body_Obj['dbg']);
@@ -1538,6 +1389,7 @@ function check_resource(request, response, body_Obj, callback) {
     }
     else {
         console.log('X-M2M-Origin: ' + request.headers['x-m2m-origin']);
+        console.log(body_Obj);
 
         var url_arr = ri.split('/');
         var last_url = url_arr[url_arr.length - 1];
@@ -1571,25 +1423,36 @@ function check_resource(request, response, body_Obj, callback) {
                                     var cur_cni = parent_Spec[0].cni;
                                     //var cur_lim = (request.query.hasOwnProperty('lim')) ? request.query.lim : '1';
                                     var cur_lim = '1';
-                                    db_sql.select_latest_resource(ri, cur_d, 0, cur_ty, cur_cni, cur_lim, function (err, result_Obj) {
-                                        if (!err) {
-                                            if (result_Obj.length == 1) {
-                                                makeObject(result_Obj[0]);
-                                                callback('1', result_Obj[0], op, request, response, body_Obj);
-                                            }
-                                            else {
-                                                result_Obj = {};
-                                                result_Obj['dbg'] = 'resource does not exist';
-                                                responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
-                                                callback('0', {}, '', request, response, body_Obj);
-                                                return '0';
-                                            }
+                                    check_cbs_cache(ri, function (cni, cbs, st) {
+                                        if(cni > 0) {
+                                            db_sql.select_latest_resource(ri, cur_ty, 1, st, function (err, result_Obj) {
+                                                if (!err) {
+                                                    if (result_Obj.length == 1) {
+                                                        makeObject(result_Obj[0]);
+                                                        callback('1', result_Obj[0], op, request, response, body_Obj);
+                                                    }
+                                                    else {
+                                                        result_Obj = {};
+                                                        result_Obj['dbg'] = 'resource does not exist';
+                                                        responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
+                                                        callback('0', {}, '', request, response, body_Obj);
+                                                        return '0';
+                                                    }
+                                                }
+                                                else {
+                                                    var code = result_Obj.message;
+                                                    result_Obj = {};
+                                                    result_Obj['dbg'] = code;
+                                                    responder.response_result(request, response, 500, result_Obj, 5000, request.url, result_Obj['dbg']);
+                                                    callback('0', {}, '', request, response, body_Obj);
+                                                    return '0';
+                                                }
+                                            });
                                         }
                                         else {
-                                            var code = result_Obj.message;
                                             result_Obj = {};
-                                            result_Obj['dbg'] = code;
-                                            responder.response_result(request, response, 500, result_Obj, 5000, request.url, result_Obj['dbg']);
+                                            result_Obj['dbg'] = 'resource does not exist';
+                                            responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
                                             callback('0', {}, '', request, response, body_Obj);
                                             return '0';
                                         }
@@ -1627,25 +1490,36 @@ function check_resource(request, response, body_Obj, callback) {
             ri = ri.replace('/oldest', '');
             ri = ri.replace('/ol', '');
             op = 'oldest';
-            db_sql.select_oldest_resource(ri, function (err, result_Obj) {
-                if (!err) {
-                    if (result_Obj.length == 1) {
-                        makeObject(result_Obj[0]);
-                        callback('1', result_Obj[0], op, request, response, body_Obj);
-                    }
-                    else {
-                        result_Obj = {};
-                        result_Obj['dbg'] = 'resource does not exist';
-                        responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
-                        callback('0', {}, '', request, response, body_Obj);
-                        return '0';
-                    }
+            check_cbs_cache(ri, function (cni, cbs, st) {
+                if(cni > 0) {
+                    db_sql.select_oldest_resource(ri, function (err, result_Obj) {
+                        if (!err) {
+                            if (result_Obj.length == 1) {
+                                makeObject(result_Obj[0]);
+                                callback('1', result_Obj[0], op, request, response, body_Obj);
+                            }
+                            else {
+                                result_Obj = {};
+                                result_Obj['dbg'] = 'resource does not exist';
+                                responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
+                                callback('0', {}, '', request, response, body_Obj);
+                                return '0';
+                            }
+                        }
+                        else {
+                            var code = result_Obj.message;
+                            result_Obj = {};
+                            result_Obj['dbg'] = code;
+                            responder.response_result(request, response, 500, result_Obj, 5000, request.url, result_Obj['dbg']);
+                            callback('0', {}, '', request, response, body_Obj);
+                            return '0';
+                        }
+                    });
                 }
                 else {
-                    var code = result_Obj.message;
                     result_Obj = {};
-                    result_Obj['dbg'] = code;
-                    responder.response_result(request, response, 500, result_Obj, 5000, request.url, result_Obj['dbg']);
+                    result_Obj['dbg'] = 'resource does not exist';
+                    responder.response_result(request, response, 404, result_Obj, 4004, request.url, result_Obj['dbg']);
                     callback('0', {}, '', request, response, body_Obj);
                     return '0';
                 }
@@ -1657,30 +1531,60 @@ function check_resource(request, response, body_Obj, callback) {
                 if (!err) {
                     if (comm_Obj.length == 1) {
                         var ty = comm_Obj[0].ty;
-                        db_sql.select_resource(responder.typeRsrc[ty], comm_Obj[0].ri, function (err, spec_Obj) {
-                            if (!err) {
-                                if (spec_Obj.length == 1) {
-                                    resource_Obj[responder.typeRsrc[ty]] = merge(comm_Obj[0], spec_Obj[0]);
-                                    makeObject(resource_Obj[responder.typeRsrc[ty]]);
-                                    callback('1', resource_Obj[responder.typeRsrc[ty]], op, request, response, body_Obj);
-                                    return '0';
+                        if(ty == 3) {
+                            check_cbs_cache(ri, function (cni, cbs, st) {
+                                db_sql.select_resource(responder.typeRsrc[ty], comm_Obj[0].ri, function (err, spec_Obj) {
+                                    if (!err) {
+                                        if (spec_Obj.length == 1) {
+                                            resource_Obj[responder.typeRsrc[ty]] = merge(comm_Obj[0], spec_Obj[0]);
+                                            makeObject(resource_Obj[responder.typeRsrc[ty]]);
+                                            callback('1', resource_Obj[responder.typeRsrc[ty]], op, request, response, body_Obj);
+                                            return '0';
+                                        }
+                                        else {
+                                            spec_Obj = {};
+                                            spec_Obj['dbg'] = 'resource does not exist';
+                                            responder.response_result(request, response, 404, spec_Obj, 4004, request.url, spec_Obj['dbg']);
+                                            callback('0', resource_Obj);
+                                            return '0';
+                                        }
+                                    }
+                                    else {
+                                        spec_Obj = {};
+                                        spec_Obj['dbg'] = spec_Obj.message;
+                                        responder.response_result(request, response, 500, spec_Obj, 5000, request.url, spec_Obj['dbg']);
+                                        callback('0', resource_Obj);
+                                        return '0';
+                                    }
+                                });
+                            });
+                        }
+                        else {
+                            db_sql.select_resource(responder.typeRsrc[ty], comm_Obj[0].ri, function (err, spec_Obj) {
+                                if (!err) {
+                                    if (spec_Obj.length == 1) {
+                                        resource_Obj[responder.typeRsrc[ty]] = merge(comm_Obj[0], spec_Obj[0]);
+                                        makeObject(resource_Obj[responder.typeRsrc[ty]]);
+                                        callback('1', resource_Obj[responder.typeRsrc[ty]], op, request, response, body_Obj);
+                                        return '0';
+                                    }
+                                    else {
+                                        spec_Obj = {};
+                                        spec_Obj['dbg'] = 'resource does not exist';
+                                        responder.response_result(request, response, 404, spec_Obj, 4004, request.url, spec_Obj['dbg']);
+                                        callback('0', resource_Obj);
+                                        return '0';
+                                    }
                                 }
                                 else {
                                     spec_Obj = {};
-                                    spec_Obj['dbg'] = 'resource does not exist';
-                                    responder.response_result(request, response, 404, spec_Obj, 4004, request.url, spec_Obj['dbg']);
+                                    spec_Obj['dbg'] = spec_Obj.message;
+                                    responder.response_result(request, response, 500, spec_Obj, 5000, request.url, spec_Obj['dbg']);
                                     callback('0', resource_Obj);
                                     return '0';
                                 }
-                            }
-                            else {
-                                spec_Obj = {};
-                                spec_Obj['dbg'] = spec_Obj.message;
-                                responder.response_result(request, response, 500, spec_Obj, 5000, request.url, spec_Obj['dbg']);
-                                callback('0', resource_Obj);
-                                return '0';
-                            }
-                        });
+                            });
+                        }
                     }
                     else {
                         comm_Obj = {};
@@ -1721,7 +1625,7 @@ function check_rt_query(request, response, body_Obj, callback) {
             callback(rsc, check_Obj, op, request, response, body_Obj);
         });
     }
-    else if (request.query.rt == 1 || request.query.rt == 2) { // nodblocking
+    else if (request.query.rt == 1 || request.query.rt == 2) { // nonblocking
         if(request.query.rt == 2 && request.headers['x-m2m-rtu'] == null && request.headers['x-m2m-rtu'] == '') {
             body_Obj = {};
             body_Obj['dbg'] = 'X-M2M-RTU is none';
@@ -1734,10 +1638,10 @@ function check_rt_query(request, response, body_Obj, callback) {
         var temp_rootnm = request.headers.rootnm;
         //var temp_rt = request.query.rt;
         var ty = '17';
-        body_Obj = {req: {}};
-        request.headers.rootnm = Object.keys(body_Obj)[0];
+        var rt_body_Obj = {req: {}};
+        request.headers.rootnm = Object.keys(rt_body_Obj)[0];
         request.query.rt = 3;
-        resource.create(request, response, ty, body_Obj, function (rsc) {
+        resource.create(request, response, ty, rt_body_Obj, function (rsc) {
             if (rsc == '1') {
                 request.headers.rootnm = temp_rootnm;
                 request.query.rt = 1;
@@ -2057,80 +1961,35 @@ function lookup_retrieve(request, response) {
                     });
                 }
                 else { //if(op == 'direct') {
-                    //if(results_comm.ty == 2 || results_comm.ty == 4 || results_comm.ty == 3 || results_comm.ty == 9 || results_comm.ty == 16 || results_comm.ty == 24 ||
-                    //    results_comm.ty == 23 || results_comm.ty == 29 || results_comm.ty == 38 || results_comm.ty == 39) {
-                    // db_sql.select_resource(responder.typeRsrc[result_Obj.ty], result_Obj.ri, function (err, results_spec) {
-                    //     if (!err) {
-                    //         if (results_spec.length == 0) {
-                    //             results_spec[0] = {};
-                    //             results_spec[0].cr = '';
-                    //             console.log('no creator');
-                    //         }
-                    //         else {
-                                if (result_Obj.ty == 2) {
-                                    result_Obj.cr = result_Obj.aei;
-                                }
-                                else if (result_Obj.ty == 16) {
-                                    result_Obj.cr = result_Obj.csi;
-                                }
-                            // }
+                    if (result_Obj.ty == 2) {
+                        result_Obj.cr = result_Obj.aei;
+                    }
+                    else if (result_Obj.ty == 16) {
+                        result_Obj.cr = result_Obj.csi;
+                    }
 
-                            if (request.query.fu == 1) {
-                                security.check(request, response, result_Obj.ty, result_Obj.acpi, '32', result_Obj.cr, function (rsc, request, response) {
-                                    if (rsc == '0') {
-                                        body_Obj = {};
-                                        body_Obj['dbg'] = resultStatusCode['4103'];
-                                        responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
-                                        return '0';
-                                    }
-                                    resource.retrieve(request, response, result_Obj);
-                                });
+                    if (request.query.fu == 1) {
+                        security.check(request, response, result_Obj.ty, result_Obj.acpi, '32', result_Obj.cr, function (rsc, request, response) {
+                            if (rsc == '0') {
+                                body_Obj = {};
+                                body_Obj['dbg'] = resultStatusCode['4103'];
+                                responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
+                                return '0';
                             }
-                            else {
-                                security.check(request, response, result_Obj.ty, result_Obj.acpi, '2', result_Obj.cr, function (rsc, request, response) {
-                                    if (rsc == '0') {
-                                        body_Obj = {};
-                                        body_Obj['dbg'] = resultStatusCode['4103'];
-                                        responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
-                                        return '0';
-                                    }
-                                    resource.retrieve(request, response, result_Obj);
-                                });
+                            resource.retrieve(request, response, result_Obj);
+                        });
+                    }
+                    else {
+                        security.check(request, response, result_Obj.ty, result_Obj.acpi, '2', result_Obj.cr, function (rsc, request, response) {
+                            if (rsc == '0') {
+                                body_Obj = {};
+                                body_Obj['dbg'] = resultStatusCode['4103'];
+                                responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
+                                return '0';
                             }
-                        // }
-                        // else {
-                        //     body_Obj = {};
-                        //     body_Obj['dbg'] = 'select resource error in security';
-                        //     responder.response_result(request, response, 500, search_Obj, 5000, request.url, body_Obj['dbg']);
-                        //     callback('0', search_Obj);
-                        //     return '0';
-                        // }
-                    // });
-                    // }
-                    // else {
-                    //     if (request.query.fu == 1) {
-                    //         security.check(request, response, results_comm.ty, results_comm.acpi, '32', '', function (rsc, request, response) {
-                    //             if (rsc == '0') {
-                    //                 body_Obj = {};
-                    //                 body_Obj['dbg'] = resultStatusCode['4103'];
-                    //                 responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
-                    //                 return '0';
-                    //             }
-                    //             resource.retrieve(request, response, results_comm);
-                    //         });
-                    //     }
-                    //     else {
-                    //         security.check(request, response, results_comm.ty, results_comm.acpi, '2', '', function (rsc, request, response) {
-                    //             if (rsc == '0') {
-                    //                 body_Obj = {};
-                    //                 body_Obj['dbg'] = resultStatusCode['4103'];
-                    //                 responder.response_result(request, response, 403, body_Obj, 4103, request.url, resultStatusCode['4103']);
-                    //                 return '0';
-                    //             }
-                    //             resource.retrieve(request, response, results_comm);
-                    //         });
-                    //     }
-                    // }
+                            resource.retrieve(request, response, result_Obj);
+                        });
+                    }
                 }
             });
         });
@@ -2317,7 +2176,6 @@ function lookup_delete(request, response) {
                                 makeObject(results_spec[0]);
                                 results_comm = merge(results_comm, results_spec[0]);
 
-                                //var cbs_cache = JSON.parse(fs.readFileSync('cbs_cache.json', 'utf-8'));
                                 for(var idx in cbs_cache) {
                                     if(cbs_cache.hasOwnProperty(idx)) {
                                         if(idx.includes(results_comm.ri)) {
@@ -2371,6 +2229,15 @@ function updateHitCount(binding) {
             //console.log(hit);
             set_hit_cache(cur_t, _hit[cur_t]);
         }
+        else {
+            _hit[cur_t] = [];
+            for (var i = 0; i < 24; i++) {
+                _hit[cur_t].push({});
+            }
+            _hit[cur_t][h][binding]++;
+
+            set_hit_cache(cur_t, _hit[cur_t]);
+        }
     }
     catch (e) {
         console.log('[updateHitCount] ' + e.message);
@@ -2394,8 +2261,8 @@ var onem2mParser = bodyParser.text(
 app.use(function (req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, X-M2M-RI, X-M2M-RSC, Accept, X-M2M-Origin, Locale');
-    res.header('Access-Control-Expose-Headers', 'Origin, X-Requested-With, Content-Type, X-M2M-RI, X-M2M-RSC, Accept, X-M2M-Origin, Locale');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, X-M2M-RI, X-M2M-RVI, X-M2M-RSC, Accept, X-M2M-Origin, Locale');
+    res.header('Access-Control-Expose-Headers', 'Origin, X-Requested-With, Content-Type, X-M2M-RI, X-M2M-RVI, X-M2M-RSC, Accept, X-M2M-Origin, Locale');
     (req.method == 'OPTIONS') ? res.sendStatus(200) : next();
 });
 
@@ -2889,6 +2756,9 @@ function notify_http(hostname, port, path, request, response) {
             if (res.headers['x-m2m-ri']) {
                 response.setHeader('X-M2M-RI', res.headers['x-m2m-ri']);
             }
+            if (res.headers['x-m2m-rvi']) {
+                response.setHeader('X-M2M-RVI', res.headers['x-m2m-rvi']);
+            }
             if (res.headers['x-m2m-rsc']) {
                 response.setHeader('X-M2M-RSC', res.headers['x-m2m-rsc']);
             }
@@ -2950,6 +2820,9 @@ function forward_http(forwardcbhost, forwardcbport, request, response) {
             }
             if (res.headers['x-m2m-ri']) {
                 response.setHeader('X-M2M-RI', res.headers['x-m2m-ri']);
+            }
+            if (res.headers['x-m2m-rvi']) {
+                response.setHeader('X-M2M-RVI', res.headers['x-m2m-rvi']);
             }
             if (res.headers['x-m2m-rsc']) {
                 response.setHeader('X-M2M-RSC', res.headers['x-m2m-rsc']);

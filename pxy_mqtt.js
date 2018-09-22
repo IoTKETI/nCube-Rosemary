@@ -361,9 +361,11 @@ function mqtt_message_action(topic_arr, bodytype, jsonObj) {
                 if(jsonObj['m2m:rqp'].fc.hasOwnProperty(fc_idx)) {
                     if(query_count == 0) {
                         to += '?';
+                        query_count++;
                     }
                     else {
                         to += '&';
+                        query_count++;
                     }
                     to += fc_idx;
                     to += '=';
@@ -451,7 +453,8 @@ function mqtt_binding(op, to, fr, rqi, ty, pc, bodytype, callback) {
             'Accept': 'application/json',
             'X-M2M-Origin': fr,
             'Content-Type': content_type,
-            'binding': 'M'
+            'binding': 'M',
+            'X-M2M-RVI': uservi
         }
     };
 
@@ -541,20 +544,39 @@ function mqtt_response(resp_topic, rsc, op, to, fr, rqi, inpc, bodytype) {
 
         var bodyString = js2xmlparser.parse("m2m:rsp", rsp_message['m2m:rsp']);
 */
-        message_cache[cache_key].rsp = bodyString.toString();
+        if(message_cache.hasOwnProperty(cache_key)) {
+            message_cache[cache_key].rsp = bodyString.toString();
+        }
+        else {
+            message_cache[cache_key] = {};
+            message_cache[cache_key].rsp = bodyString.toString();
+        }
 
         pxymqtt_client.publish(resp_topic, bodyString.toString());
     }
     else if(bodytype === 'cbor') {
         bodyString = cbor.encode(rsp_message['m2m:rsp']).toString('hex');
 
-        message_cache[cache_key].rsp = bodyString.toString();
+        if(message_cache.hasOwnProperty(cache_key)) {
+            message_cache[cache_key].rsp = bodyString.toString();
+        }
+        else {
+            message_cache[cache_key] = {};
+            message_cache[cache_key].rsp = bodyString.toString();
+        }
 
         pxymqtt_client.publish(resp_topic, bodyString);
     }
     else { // 'json'
         try {
-            message_cache[cache_key].rsp = JSON.stringify(rsp_message['m2m:rsp']);
+            if(message_cache.hasOwnProperty(cache_key)) {
+                message_cache[cache_key].rsp = JSON.stringify(rsp_message['m2m:rsp']);
+            }
+            else {
+                message_cache[cache_key] = {};
+                message_cache[cache_key].rsp = JSON.stringify(rsp_message['m2m:rsp']);
+            }
+
             pxymqtt_client.publish(resp_topic, message_cache[cache_key].rsp);
         }
         catch (e) {
@@ -743,8 +765,10 @@ function http_retrieve_CSEBase(callback) {
         headers: {
             'X-M2M-RI': rqi,
             'Accept': 'application/json',
-            'X-M2M-Origin': usecseid
-        }
+            'X-M2M-Origin': usecseid,
+            'X-M2M-RVI': uservi
+        },
+        rejectUnauthorized: false
     };
 
     if(usesecure == 'disable') {

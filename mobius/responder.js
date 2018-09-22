@@ -806,7 +806,7 @@ function typeCheckAction(index1, body_Obj) {
         if(body_Obj.hasOwnProperty(index2)) {
             if (body_Obj[index2] == null || body_Obj[index2] == '' || body_Obj[index2] == 'undefined' || body_Obj[index2] == '[]' || body_Obj[index2] == '\"\"') {
                 //delete body_Obj[index2];
-                if(index2 != 'pi') {
+                if(index2 != 'pi' || index2 != 'pv') {
                     delete body_Obj[index2];
                 }
             }
@@ -823,7 +823,7 @@ function typeCheckAction(index1, body_Obj) {
             else if (index2 == 'acp' || index2 == 'cst' || index2 == 'los' || index2 == 'mt' || index2 == 'csy' || index2 == 'nct' ||
                 index2 == 'cs' || index2 == 'st' || index2 == 'ty' || index2 == 'cbs' || index2 == 'cni' || index2 == 'mni' ||
                 index2 == 'cnm' || index2 == 'mia' || index2 == 'mbs' || index2 == 'mgd' || index2 == 'btl' || index2 == 'bts' ||
-                index2 == 'mdn' || index2 == 'mdc' || index2 == 'mdt' || index2 == 'pei' || index2 == 'mnm' || index2 == 'exc') {
+                index2 == 'mdn' || index2 == 'mdc' || index2 == 'mdt' || index2 == 'pei' || index2 == 'mnm' || index2 == 'exc' || index2 == 'rs' || index2 == 'ors') {
 
                 if ((index1 == 'm2m:cb' || index1 == 'm2m:cin' || index1 == 'm2m:nod' || index1 == 'm2m:ae' || index1 == 'm2m:sub' || index1 == 'm2m:acp' ||
                         index1 == 'm2m:csr' || index1 == 'm2m:grp' || index1 == 'm2m:fwr' || index1 == 'm2m:bat' || index1 == 'm2m:dvi' || index1 == 'm2m:dvc' ||
@@ -844,7 +844,7 @@ function typeCheckAction(index1, body_Obj) {
                     body_Obj[index2] = parseInt(body_Obj[index2]);
                 }
             }
-            else if (index2 == 'aa' || index2 == 'at' || index2 == 'poa' || index2 == 'lbl' || index2 == 'acpi' || index2 == 'srt' || index2 == 'nu' || index2 == 'mid' || index2 == 'macp') {
+            else if (index2 == 'srv' || index2 == 'aa' || index2 == 'at' || index2 == 'poa' || index2 == 'lbl' || index2 == 'acpi' || index2 == 'srt' || index2 == 'nu' || index2 == 'mid' || index2 == 'macp') {
                 if (!Array.isArray(body_Obj[index2])) {
                     body_Obj[index2] = JSON.parse(body_Obj[index2]);
                 }
@@ -853,6 +853,24 @@ function typeCheckAction(index1, body_Obj) {
                     for (index3 in body_Obj[index2]) {
                         if (body_Obj[index2].hasOwnProperty(index3)) {
                             body_Obj[index2][index3] = parseInt(body_Obj[index2][index3]);
+                        }
+                    }
+                }
+                else if (index2 == 'mid') {
+                    if(body_Obj[index2].length > 0) {
+                        for(var idx in body_Obj[index2]) {
+                            if(body_Obj[index2].hasOwnProperty(idx)) {
+                                body_Obj[index2][idx] = body_Obj[index2][idx].replace(usespid + usecseid + '/', '/'); // absolute
+                                body_Obj[index2][idx] = body_Obj[index2][idx].replace(usecseid + '/', '/'); // SP
+
+                                // if(body_Obj[index2][idx].charAt(0) != '/') {
+                                //     body_Obj[index2][idx] = '/' + body_Obj[index2][idx];
+                                // }
+
+                                if(body_Obj[index2][idx].charAt(0) == '/') {
+                                    body_Obj[index2][idx] = body_Obj[index2][idx].replace('/', '');
+                                }
+                            }
                         }
                     }
                 }
@@ -1004,6 +1022,7 @@ function xmlAction(xml, body_Obj) {
         xmlInsert(xml, body_Obj, 'dac');
         xmlInsert(xml, body_Obj, 'esi');
         xmlInsert(xml, body_Obj, 'ch');
+        xmlInsert(xml, body_Obj, 'srv');
     }
     else {
         xmlInsert(xml, body_Obj, 'et');
@@ -1021,6 +1040,7 @@ function xmlAction(xml, body_Obj) {
             xmlInsert(xml, body_Obj, 'nl');
             xmlInsert(xml, body_Obj, 'trn');
             xmlInsert(xml, body_Obj, 'esi');
+            xmlInsert(xml, body_Obj, 'srv');
         }
         else if (xml.name === 'm2m:ae') {
             xmlInsert(xml, body_Obj, 'daci', 'et');
@@ -1033,6 +1053,7 @@ function xmlAction(xml, body_Obj) {
             xmlInsert(xml, body_Obj, 'rr');
             xmlInsert(xml, body_Obj, 'csz');
             xmlInsert(xml, body_Obj, 'esi');
+            xmlInsert(xml, body_Obj, 'srv');
         }
         else if (xml.name === 'm2m:cnt') {
             xmlInsert(xml, body_Obj, 'daci', 'et');
@@ -1510,11 +1531,23 @@ function typeCheckforJson2(body_Obj) {
     }
 }
 
+var operation = {
+    'post': 1,
+    'get': 2,
+    'put': 3,
+    'delete': 4
+};
+
 function store_to_req_resource(request, bodyString, rsc, cap) {
-    db_sql.update_req('/' + request.headers.tg, bodyString, rsc, function () {
+    var op = operation[request.method];
+    var mi = {};
+    mi.rvi = request.headers['x-m2m-rvi'];
+    var rs = 1;
+    var ors = rsc;
+    db_sql.update_req('/' + request.headers.tg, bodyString, op, JSON.stringify(mi), rs, ors, function () {
         var rspObj = {};
         rspObj.rsc = rsc;
-        rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
+        rspObj.ri = request.method + "-" + request.headers['x-m2m-ri'] + "-" + JSON.stringify(request.query);
         rspObj = cap;
         console.log(JSON.stringify(rspObj));
 
@@ -1543,6 +1576,10 @@ exports.response_result = function(request, response, status, body_Obj, rsc, ri,
     if (request.query.rt == 3) {
         if (request.headers['x-m2m-ri'] != null) {
             response.setHeader('X-M2M-RI', request.headers['x-m2m-ri']);
+        }
+
+        if (request.headers['x-m2m-rvi'] != null) {
+            response.setHeader('X-M2M-rvi', request.headers['x-m2m-rvi']);
         }
 
         if (request.headers.locale != null) {
@@ -1584,7 +1621,12 @@ exports.response_result = function(request, response, status, body_Obj, rsc, ri,
             console.log(JSON.stringify(rspObj));
         }
         else if (request.query.rt == 1) {
-            db_sql.update_req('/'+request.headers.tg, '', rsc, function () {
+            var op = operation[request.method];
+            var mi = {};
+            mi.rvi = request.headers['x-m2m-rvi'];
+            var rs = 1;
+            var ors = rsc;
+            db_sql.update_req('/'+request.headers.tg, '', op, JSON.stringify(mi), rs, ors, function () {
                 var rspObj = {
                     rsc: rsc,
                     ri: ri,
@@ -1657,6 +1699,10 @@ exports.response_rcn3_result = function(request, response, status, body_Obj, rsc
     if (request.query.rt == 3) {
         if (request.headers['x-m2m-ri'] != null) {
             response.setHeader('X-M2M-RI', request.headers['x-m2m-ri']);
+        }
+
+        if (request.headers['x-m2m-rvi'] != null) {
+            response.setHeader('X-M2M-rvi', request.headers['x-m2m-rvi']);
         }
 
         if (request.headers.locale != null) {
@@ -1759,6 +1805,10 @@ exports.search_result = function(request, response, status, body_Obj, rsc, ri, c
             response.setHeader('X-M2M-RI', request.headers['x-m2m-ri']);
         }
 
+        if (request.headers['x-m2m-rvi'] != null) {
+            response.setHeader('X-M2M-rvi', request.headers['x-m2m-rvi']);
+        }
+
         if (request.headers.locale != null) {
             response.setHeader('locale', request.headers.locale);
         }
@@ -1834,7 +1884,12 @@ exports.search_result = function(request, response, status, body_Obj, rsc, ri, c
 
             bodyString = JSON.stringify(body_Obj);
 
-            db_sql.update_req('/'+request.headers.tg, bodyString, rsc, function () {
+            var op = operation[request.method];
+            var mi = {};
+            mi.rvi = request.headers['x-m2m-rvi'];
+            var rs = 1;
+            var ors = rsc;
+            db_sql.update_req('/'+request.headers.tg, bodyString, op, JSON.stringify(mi), rs, ors, function () {
                 rspObj = {};
                 rspObj.rsc = rsc;
                 rspObj.ri = request.method + "-" + ri + "-" + JSON.stringify(request.query);
@@ -1932,7 +1987,8 @@ function request_noti_http(nu, bodyString, bodytype, xm2mri) {
             'X-M2M-RI': xm2mri,
             'Accept': 'application/'+bodytype,
             'X-M2M-Origin': usecseid,
-            'Content-Type': 'application/'+bodytype
+            'Content-Type': 'application/'+bodytype,
+            'X-M2M-RVI': uservi
         }
     };
 
@@ -1955,14 +2011,7 @@ function request_noti_http(nu, bodyString, bodytype, xm2mri) {
     });
 
     req.on('close', function() {
-        ss_fail_count[req._headers.ri]++;
         console.log('[nonblocking-async-http] close: no response for notification');
-
-        var xm2mri = require('shortid').generate();
-        if (ss_fail_count[req._headers.ri] >= 8) {
-            delete ss_fail_count[req._headers.ri];
-            delete_sub(req._headers.ri, xm2mri);
-        }
     });
 
     console.log('<---- [nonblocking-async-http] notification for non-blocking request with ' + bodytype + ' to ' + nu);
@@ -1976,7 +2025,7 @@ function request_noti_coap(nu, bodyString, bodytype, xm2mri) {
         port: url.parse(nu).port,
         pathname: url.parse(nu).path,
         method: 'post',
-        confirmable: 'true',
+        confirmable: 'false',
         options: {
             'Accept': 'application/'+bodytype,
             'Content-Type': 'application/'+bodytype,

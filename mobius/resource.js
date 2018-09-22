@@ -104,8 +104,8 @@ create_m_attr_list.rbo = ['mgd'];
 
 global.create_opt_attr_list = {};
 create_opt_attr_list.acp = ['rn', 'et', 'lbl', 'aa', 'at'];
-create_opt_attr_list.csr = ['rn', 'acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'cst', 'poa', 'mei', 'tri', 'nl', 'esi'];
-create_opt_attr_list.ae = ['rn', 'acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'apn', 'poa', 'or', 'nl', 'csz', 'esi'];
+create_opt_attr_list.csr = ['rn', 'acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'cst', 'poa', 'mei', 'tri', 'nl', 'esi', 'srv'];
+create_opt_attr_list.ae = ['rn', 'acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'apn', 'poa', 'or', 'nl', 'csz', 'esi', 'srv'];
 create_opt_attr_list.cnt = ['rn', 'acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'cr', 'mni', 'mbs', 'mia', 'li', 'or', 'disr'];
 create_opt_attr_list.cin = ['rn', 'et', 'lbl', 'aa', 'at', 'daci', 'cr', 'cnf', 'conr', 'or'];
 create_opt_attr_list.sub = ['rn', 'acpi', 'et', 'lbl', 'daci', 'cr', 'enc', 'exc', 'gpi', 'nfu', 'bn', 'rl', 'psn', 'pn', 'nsp', 'ln', 'nct', 'nec', 'su'];
@@ -171,8 +171,8 @@ update_m_attr_list.rbo = [];
 
 global.update_opt_attr_list = {};
 update_opt_attr_list.acp = ['et', 'lbl', 'aa', 'at', 'pv', 'pvs'];
-update_opt_attr_list.csr = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'poa', 'mei', 'rr', 'nl', 'tri', 'esi'];
-update_opt_attr_list.ae = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'apn', 'poa', 'or', 'nl', 'rr', 'csz', 'esi'];
+update_opt_attr_list.csr = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'poa', 'mei', 'rr', 'nl', 'tri', 'esi', 'srv'];
+update_opt_attr_list.ae = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'apn', 'poa', 'or', 'nl', 'rr', 'csz', 'esi', 'srv'];
 update_opt_attr_list.cnt = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'mni', 'mbs', 'mia', 'li', 'or'];
 update_opt_attr_list.sub = ['acpi', 'et', 'lbl', 'daci', 'enc', 'exc', 'nu', 'gpi', 'bn', 'rl', 'pn', 'nsp', 'ln', 'nct', 'nec'];
 update_opt_attr_list.lcp = ['acpi', 'et', 'lbl', 'aa', 'at', 'daci', 'lou'];
@@ -279,7 +279,8 @@ function check_TS(ri, callback) {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
                 'X-M2M-Origin': usecseid,
-                'Content-Type': 'application/vnd.onem2m-res+json'
+                'Content-Type': 'application/vnd.onem2m-res+json',
+                'X-M2M-RVI': uservi
             }
         };
 
@@ -304,7 +305,8 @@ function check_TS(ri, callback) {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
                 'X-M2M-Origin': usecseid,
-                'Content-Type': 'application/vnd.onem2m-res+json'
+                'Content-Type': 'application/vnd.onem2m-res+json',
+                'X-M2M-RVI': uservi
             },
             ca: fs.readFileSync('ca-crt.pem')
         };
@@ -347,7 +349,8 @@ function delete_TS(callback) {
             headers: {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
-                'X-M2M-Origin': usecseid
+                'X-M2M-Origin': usecseid,
+                'X-M2M-RVI': uservi
             }
         };
 
@@ -371,7 +374,8 @@ function delete_TS(callback) {
             headers: {
                 'X-M2M-RI': rqi,
                 'Accept': 'application/json',
-                'X-M2M-Origin': usecseid
+                'X-M2M-Origin': usecseid,
+                'X-M2M-RVI': uservi
             },
             ca: fs.readFileSync('ca-crt.pem')
         };
@@ -403,7 +407,7 @@ function delete_TS(callback) {
 
 */
 function create_action_st(ri, ty, pi, callback) {
-    db_sql.select_st_parent(pi, function (err, results_st) {
+    db_sql.select_st(pi, function (err, results_st) {
         if (results_st.length == 1) {
             var st = results_st[0]['st'];
             st = (parseInt(st, 10) + 1).toString();
@@ -422,47 +426,31 @@ function create_action_st(ri, ty, pi, callback) {
         }
     });
 }
-/*
-function create_action_cni(ty, pi, cni, cbs, mni, mbs, st, callback) {
-    if (parseInt(cni, 10) > parseInt(mni, 10) || parseInt(cbs, 10) > parseInt(mbs, 10)) {
-        db_sql.select_cs_parent(ty, pi, function (err, results_cs) { // select oldest
-            if (results_cs.length == 1) {
-                db_sql.delete_ri_lookup(results_cs[0].ri, function (err) {
-                    if (!err) {
-                        cni = (parseInt(cni, 10) - 1).toString();
-                        cbs = (parseInt(cbs, 10) - parseInt(results_cs[0].cs, 10)).toString();
-                        db_sql.update_cni_parent(ty, cni, cbs, st, pi, function (err, results) {
-                            if (!err) {
-                                create_action_cni(ty, pi, cni, cbs, mni, mbs, st, function (rsc) {
-                                    callback(rsc);
-                                });
-                            }
-                            else {
-                                var body_Obj = {};
-                                body_Obj['dbg'] = results.message;
-                                console.log(JSON.stringify(body_Obj));
-                                callback('0');
-                                return '0';
-                            }
-                        });
-                    }
-                    else {
-                        var body_Obj = {};
-                        body_Obj['dbg'] = results_cs.message;
-                        //responder.response_result(request, response, 500, body_Obj, 5000, request.url, results.message);
-                        console.log(JSON.stringify(body_Obj));
-                        callback('0');
-                        return '0';
+
+global.check_cbs_cache = function(ri, callback) {
+    if (cbs_cache.hasOwnProperty(ri)) {
+        callback(cbs_cache[ri].cni, cbs_cache[ri].cbs, cbs_cache[ri].st);
+    }
+    else {
+        cbs_cache[ri] = {};
+        db_sql.select_st(ri, function (err, results_st) {
+            if (results_st.length == 1) {
+                var st = results_st[0].st;
+                cbs_cache[ri].st = parseInt(st, 10);
+                db_sql.select_count_ri(4, ri, function (err, results) {
+                    if (results.length == 1) {
+                        cbs_cache[ri].cni = results[0]['count(*)'];
+                        cbs_cache[ri].cbs = (results[0]['sum(cs)'] == null) ? 0 : results[0]['sum(cs)'];
+                        set_cbs_cache(ri, cbs_cache[ri]);
+
+                        callback(cbs_cache[ri].cni, cbs_cache[ri].cbs, cbs_cache[ri].st);
                     }
                 });
             }
         });
     }
-    else {
-        callback('1');
-    }
-}
-*/
+};
+
 function create_action(request, response, ty, resource_Obj, callback) {
     var rootnm = request.headers.rootnm;
     var body_Obj = {};
@@ -499,7 +487,7 @@ function create_action(request, response, ty, resource_Obj, callback) {
             resource_Obj[rootnm].lt, resource_Obj[rootnm].et, JSON.stringify(resource_Obj[rootnm].acpi), JSON.stringify(resource_Obj[rootnm].lbl), JSON.stringify(resource_Obj[rootnm].at),
             JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].st, resource_Obj[rootnm].sri, resource_Obj[rootnm].spi,
             resource_Obj[rootnm].apn, resource_Obj[rootnm].api, resource_Obj[rootnm].aei, JSON.stringify(resource_Obj[rootnm].poa),
-            resource_Obj[rootnm].or, resource_Obj[rootnm].nl, resource_Obj[rootnm].rr, resource_Obj[rootnm].csz, function (err, results) {
+            resource_Obj[rootnm].or, resource_Obj[rootnm].nl, resource_Obj[rootnm].rr, resource_Obj[rootnm].csz, JSON.stringify(resource_Obj[rootnm].srv), function (err, results) {
                 if (!err) {
                     // create_action_st(resource_Obj[rootnm].ri, resource_Obj[rootnm].ty, resource_Obj[rootnm].pi, function (rsc) {
                     // });
@@ -527,9 +515,34 @@ function create_action(request, response, ty, resource_Obj, callback) {
             JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].st, resource_Obj[rootnm].mni, resource_Obj[rootnm].sri, resource_Obj[rootnm].spi,
             resource_Obj[rootnm].cr, resource_Obj[rootnm].mbs, resource_Obj[rootnm].mia,
             resource_Obj[rootnm].cni, resource_Obj[rootnm].cbs, resource_Obj[rootnm].li, resource_Obj[rootnm].or, resource_Obj[rootnm].disr, function (err, results) {
+            if (!err) {
+                cbs_cache[resource_Obj[rootnm].ri] = {};
+                cbs_cache[resource_Obj[rootnm].ri].cni = 0;
+                cbs_cache[resource_Obj[rootnm].ri].cbs = 0;
+                cbs_cache[resource_Obj[rootnm].ri].st = 0;
+
+                callback('1', resource_Obj);
+            }
+            else {
+                if (results.code == 'ER_DUP_ENTRY') {
+                    body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
+                }
+                else {
+                    body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
+                }
+                callback('0', resource_Obj);
+                return '0';
+            }
+        });
+    }
+    else if (ty == '4') {
+        check_cbs_cache(resource_Obj[rootnm].pi, function (cni, cbs, st) {
+            db_sql.insert_cin(resource_Obj[rootnm], cni, cbs, st, request.headers.mni, request.headers.mbs, function (err, results) {
                 if (!err) {
-                    // create_action_st(resource_Obj[rootnm].ri, resource_Obj[rootnm].ty, resource_Obj[rootnm].pi, function (rsc) {
-                    // });
                     callback('1', resource_Obj);
                 }
                 else {
@@ -547,27 +560,6 @@ function create_action(request, response, ty, resource_Obj, callback) {
                     return '0';
                 }
             });
-    }
-    else if (ty == '4') {
-        //var ty = resource_Obj[rootnm].ty;
-        db_sql.insert_cin(resource_Obj[rootnm], request.headers.mni, request.headers.mbs, request.headers.st, function (err, results) {
-            if (!err) {
-                callback('1', resource_Obj);
-            }
-            else {
-                if (results.code == 'ER_DUP_ENTRY') {
-                    body_Obj = {};
-                    body_Obj['dbg'] = results.message;
-                    responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
-                }
-                else {
-                    body_Obj = {};
-                    body_Obj['dbg'] = results.message;
-                    responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
-                }
-                callback('0', resource_Obj);
-                return '0';
-            }
         });
     }
     else if (ty == '9') {
@@ -797,7 +789,7 @@ function create_action(request, response, ty, resource_Obj, callback) {
             resource_Obj[rootnm].lt, resource_Obj[rootnm].et, JSON.stringify(resource_Obj[rootnm].acpi), JSON.stringify(resource_Obj[rootnm].lbl), JSON.stringify(resource_Obj[rootnm].at),
             JSON.stringify(resource_Obj[rootnm].aa), resource_Obj[rootnm].st, resource_Obj[rootnm].sri, resource_Obj[rootnm].spi,
             resource_Obj[rootnm].cst, JSON.stringify(resource_Obj[rootnm].poa), resource_Obj[rootnm].cb, resource_Obj[rootnm].csi,
-            resource_Obj[rootnm].mei, resource_Obj[rootnm].tri, resource_Obj[rootnm].rr, resource_Obj[rootnm].nl, function (err, results) {
+            resource_Obj[rootnm].mei, resource_Obj[rootnm].tri, resource_Obj[rootnm].rr, resource_Obj[rootnm].nl, JSON.stringify(resource_Obj[rootnm].srv), function (err, results) {
                 if (!err) {
                     // create_action_st(resource_Obj[rootnm].ri, resource_Obj[rootnm].ty, resource_Obj[rootnm].pi, function (rsc) {
                     // });
@@ -933,48 +925,51 @@ function create_action(request, response, ty, resource_Obj, callback) {
     }
     else if (ty == '30') {
         db_sql.insert_tsi(resource_Obj[rootnm], function (err, results) {
-                if (!err) {
-                    var ty = resource_Obj[rootnm].ty;
-                    var pi = resource_Obj[rootnm].pi;
-                    var mni = request.headers.mni;
-                    var mbs = request.headers.mbs;
-                    var cni = (parseInt(request.headers.cni, 10) + 1).toString();
-                    var cbs = (parseInt(request.headers.cbs, 10) + parseInt(resource_Obj[rootnm].cs, 10)).toString();
-                    var st = (parseInt(request.headers.st, 10) + 1).toString();
-                    db_sql.update_cni_parent(ty, cni, cbs, st, pi, function (err, results) {
-                        if (!err) {
-                            create_action_cni(resource_Obj[rootnm].ty, resource_Obj[rootnm].pi, cni, cbs, mni, mbs, st, function (rsc) {
-                                resource_Obj[rootnm].st = st;
-                                callback('1', resource_Obj);
-                            });
-                        }
-                        else {
-                            // rollback
-                            db_sql.delete_ri_lookup(resource_Obj[rootnm].ri, function (err) {
-                                body_Obj = {};
-                                body_Obj['dbg'] = results.message;
-                                responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
-                                callback('0', resource_Obj);
-                                return '0';
-                            });
-                        }
-                    });
+            if (!err) {
+                resource_Obj[rootnm].st = st;
+                callback('1', resource_Obj);
+
+                // var ty = resource_Obj[rootnm].ty;
+                // var pi = resource_Obj[rootnm].pi;
+                // var mni = request.headers.mni;
+                // var mbs = request.headers.mbs;
+                // var cni = (parseInt(request.headers.cni, 10) + 1).toString();
+                // var cbs = (parseInt(request.headers.cbs, 10) + parseInt(resource_Obj[rootnm].cs, 10)).toString();
+                // var st = (parseInt(request.headers.st, 10) + 1).toString();
+                // db_sql.update_cni_parent(ty, cni, cbs, st, pi, function (err, results) {
+                //     if (!err) {
+                //         create_action_cni(resource_Obj[rootnm].ty, resource_Obj[rootnm].pi, cni, cbs, mni, mbs, st, function (rsc) {
+                //             resource_Obj[rootnm].st = st;
+                //             callback('1', resource_Obj);
+                //         });
+                //     }
+                //     else {
+                //         // rollback
+                //         db_sql.delete_ri_lookup(resource_Obj[rootnm].ri, function (err) {
+                //             body_Obj = {};
+                //             body_Obj['dbg'] = results.message;
+                //             responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
+                //             callback('0', resource_Obj);
+                //             return '0';
+                //         });
+                //     }
+                // });
+            }
+            else {
+                if (results.code == 'ER_DUP_ENTRY') {
+                    body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
                 }
                 else {
-                    if (results.code == 'ER_DUP_ENTRY') {
-                        body_Obj = {};
-                        body_Obj['dbg'] = results.message;
-                        responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
-                    }
-                    else {
-                        body_Obj = {};
-                        body_Obj['dbg'] = results.message;
-                        responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
-                    }
-                    callback('0', resource_Obj);
-                    return '0';
+                    body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
                 }
-            });
+                callback('0', resource_Obj);
+                return '0';
+            }
+        });
     }
     else if (ty == '27') {
         db_sql.insert_mms(resource_Obj[rootnm].ty, resource_Obj[rootnm].ri, resource_Obj[rootnm].rn, resource_Obj[rootnm].pi, resource_Obj[rootnm].ct,
@@ -1166,7 +1161,7 @@ function build_resource(request, response, ty, body_Obj, callback) {
     }
     resource_Obj[rootnm].lt = resource_Obj[rootnm].ct;
 
-    resource_Obj[rootnm].st = '0';
+    resource_Obj[rootnm].st = 0;
 
     if (ty == '3' || ty == '29') {
         resource_Obj[rootnm].mni = '3153600000';
@@ -1370,11 +1365,22 @@ function build_resource(request, response, ty, body_Obj, callback) {
     db_sql.select_direct_lookup(resource_Obj[rootnm].ri, function (err, result_Obj) {
         if (!err) {
             if (result_Obj.length == 1) {
-                body_Obj = {};
-                body_Obj['dbg'] = "resource (" + result_Obj[0].rn + ") is already exist";
-                responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
-                callback('0');
-                return '0';
+                if(result_Obj[0].ty == 3) {
+                    check_cbs_cache(result_Obj[0].ri, function (cni, cbs, st) {
+                        body_Obj = {};
+                        body_Obj['dbg'] = "resource (" + result_Obj[0].rn + ") is already exist";
+                        responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
+                        callback('0');
+                        return '0';
+                    });
+                }
+                else {
+                    body_Obj = {};
+                    body_Obj['dbg'] = "resource (" + result_Obj[0].rn + ") is already exist";
+                    responder.response_result(request, response, 409, body_Obj, 4105, request.url, body_Obj['dbg']);
+                    callback('0');
+                    return '0';
+                }
             }
             else {
                 resource_Obj[rootnm].acpi = (body_Obj[rootnm].acpi) ? body_Obj[rootnm].acpi : [];
@@ -1518,7 +1524,7 @@ exports.create = function (request, response, ty, body_Obj, callback) {
                     sgn.check(request, notiObj[rootnm], 3);
                 }
 
-                if(ty == 23) { // when ty is 23, send notification for verification
+                else if(ty == 23) { // when ty is 23, send notification for verification
                     var notiObj = JSON.parse(JSON.stringify(resource_Obj));
                     _this.remove_no_value(request, notiObj);
                     sgn.check(request, notiObj[rootnm], 256);
@@ -1542,15 +1548,8 @@ exports.create = function (request, response, ty, body_Obj, callback) {
 
                         _this.remove_no_value(request, create_Obj);
 
-                        if (request.query.real != 4) { // realtime, new
-                            // if(ty == 23) { // when ty is 23, send notification for verification
-                            //     var notiObj = JSON.parse(JSON.stringify(create_Obj));
-                            //     _this.remove_no_value(request, notiObj);
-                            //     sgn.check(request, notiObj[rootnm], 99);
-                            // }
-                            // else {
-                                sgn.check(request, create_Obj[rootnm], 3);
-                            // }
+                        if (request.query.real != 4) {
+                            sgn.check(request, create_Obj[rootnm], 3);
                         }
 
                         var status_code = 201;
@@ -1567,7 +1566,12 @@ exports.create = function (request, response, ty, body_Obj, callback) {
                         if (Object.keys(create_Obj)[0] == 'req') {
                             request.headers.tg = create_Obj[rootnm].ri.replace('/', '');
                             status_code = 202;
-                            rsc_code = 1000;
+                            if(request.headers.hasOwnProperty('x-m2m-rtu')) {
+                                rsc_code = 1002;
+                            }
+                            else {
+                                rsc_code = 1001;
+                            }
                             request.headers.rootnm = 'uri';
                             var resource_Obj = {};
                             resource_Obj.uri = {};
@@ -1835,6 +1839,12 @@ global.makeObject = function (obj) {
         if (obj.hasOwnProperty('rsps')) {
             obj.rsps = JSON.parse(obj.rsps);
         }
+        if (obj.hasOwnProperty('srv')) {
+            obj.srv = JSON.parse(obj.srv);
+        }
+        if (obj.hasOwnProperty('mi')) {
+            obj.mi = JSON.parse(obj.mi);
+        }
         if (obj.hasOwnProperty('trqp')) {
             var trqp_type = getType(obj.trqp);
             if (trqp_type === 'object' || trqp_type === 'array' || trqp_type === 'string_object') {
@@ -1930,15 +1940,12 @@ exports.retrieve = function (request, response, resource_Obj) {
             if (rsc == '0') {
                 return rsc;
             }
-            //retrieve_action(request, response, ty, comm_Obj, function (rsc, retrieve_Obj) {
-            //    if (rsc == '1') {
-                    var retrieve_Obj = {};
-                    retrieve_Obj[rootnm] = merge({}, resource_Obj);
-                    _this.remove_no_value(request, retrieve_Obj);
-                    responder.response_result(request, response, 200, retrieve_Obj, 2000, retrieve_Obj[rootnm].ri, '');
-                    return '0';
-            //    }
-            //});
+
+            var retrieve_Obj = {};
+            retrieve_Obj[rootnm] = merge({}, resource_Obj);
+            _this.remove_no_value(request, retrieve_Obj);
+            responder.response_result(request, response, 200, retrieve_Obj, 2000, retrieve_Obj[rootnm].ri, '');
+            return '0';
         });
     }
     else if (request.query.fu == 1 && (request.query.smf)) {
@@ -2016,7 +2023,7 @@ global.update_body = function (rootnm, body_Obj, resource_Obj) {
                 resource_Obj[rootnm][attr] = body_Obj[rootnm][attr];
             }
 
-            if (attr === 'aa' || attr === 'poa' || attr === 'lbl' || attr === 'acpi' || attr === 'srt' || attr === 'nu' || attr === 'mid' || attr === 'macp') {
+            if (attr === 'aa' || attr === 'poa' || attr === 'lbl' || attr === 'acpi' || attr === 'srt' || attr === 'nu' || attr === 'mid' || attr === 'macp' || attr === 'srv') {
                 if (body_Obj[rootnm][attr] === '') {
                     resource_Obj[rootnm][attr] = [];
                 }
@@ -2037,60 +2044,59 @@ global.update_body = function (rootnm, body_Obj, resource_Obj) {
     }
 };
 
+function update_action_mni(ty, ri, mni, mbs, callback) {
+    check_cbs_cache(ri, function (cni, cbs, st) {
+        if (cni > parseInt(mni, 10)) {
+            var offset = parseInt(cni, 10) - parseInt(mni, 10);
+            db_sql.delete_ri_lookup_in(ty, ri, offset, function (err, results) {
+                if (!err) {
+                    db_sql.select_count_ri(ty, ri, function (err, results) {
+                        if (results.length == 1) {
+                            cbs_cache[ri].cni = results[0]['count(*)'];
+                            cbs_cache[ri].cbs = (results[0]['sum(cs)'] == null) ? 0 : results[0]['sum(cs)'];
+                            set_cbs_cache(ri, cbs_cache[ri]);
 
-function update_action_mni(ty, ri, mni, callback) {
-    //var sql = util.format("delete from lookup where ri in (select ri from (select ri from lookup where pi = \'%s\' and ty = \'%s\' order by ri desc limit %s, 3153600000) x)", ri, ty, mni);
+                            update_action_mni(ty, ri, mni, mbs, function (rsc, cni, cbs) {
+                                callback(rsc, cni, cbs);
+                            });
+                        }
+                    });
+                }
+                else {
+                    var body_Obj = {};
+                    body_Obj['dbg'] = results.message;
+                    console.log(JSON.stringify(body_Obj));
+                    callback('0');
+                    return '0';
+                }
+            });
+        }
+        else if (cbs > parseInt(mbs, 10)) {
+            db_sql.select_cs_parent(ty, ri, function (err, results_cs) { // select oldest
+                if (results_cs.length == 1) {
+                    db_sql.delete_ri_lookup(results_cs[0].ri, function (err) {
+                        if (!err) {
+                            cbs_cache[ri].cni = (parseInt(cni, 10) - 1).toString();
+                            cbs_cache[ri].cbs = (parseInt(cbs, 10) - parseInt(results_cs[0].cs, 10)).toString();
+                            set_cbs_cache(ri, cbs_cache[ri]);
 
-    if (mni == '9007199254740991') {
-        mni = '3153600000';
-    }
-    db_sql.select_count_ri(ty, ri, function (err, results) {
-        if (results.length == 1) {
-            var cniObj = {};
-            cniObj.cni = results[0]['count(*)'];
-            cniObj.cbs = (cniObj.cni == 0) ? 0 : results[0]['sum(cs)'];
-
-            var offset = parseInt(cniObj.cni, 10) - parseInt(mni, 10);
-
-            if (offset > 0) {
-                db_sql.delete_ri_lookup_in(ty, ri, offset, function (err, results) {
-                    if (!err) {
-                        db_sql.select_count_ri(ty, ri, function (err, results) {
-                            if (results.length == 1) {
-                                cniObj.cni = results[0]['count(*)'];
-                                cniObj.cbs = (cniObj.cni == 0) ? 0 : results[0]['sum(cs)'];
-
-                                console.log('[update_action_mni] cni: ' + cniObj.cni + ', cbs: ' + cniObj.cbs);
-
-                                db_sql.update_cni_ri(ty, ri, cniObj.cni, cniObj.cbs, function (err, results) {
-                                    if (!err) {
-                                        callback('1', cniObj.cni, cniObj.cbs);
-                                    }
-                                    else {
-                                        var body_Obj = {};
-                                        body_Obj['dbg'] = results.message;
-                                        //responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
-                                        console.log(JSON.stringify(body_Obj));
-                                        callback('0');
-                                        return '0';
-                                    }
-                                });
-                            }
-                        });
-                    }
-                    else {
-                        var body_Obj = {};
-                        body_Obj['dbg'] = results.message;
-                        //responder.response_result(request, response, 500, body_Obj, 5000, request.url, body_Obj['dbg']);
-                        console.log(JSON.stringify(body_Obj));
-                        callback('0');
-                        return '0';
-                    }
-                });
-            }
-            else {
-                callback('1', cniObj.cni, cniObj.cbs);
-            }
+                            update_action_mni(ty, ri, mni, mbs, function (rsc, cni, cbs) {
+                                callback(rsc, cni, cbs);
+                            });
+                        }
+                    });
+                }
+                else {
+                    var body_Obj = {};
+                    body_Obj['dbg'] = results_cs.message;
+                    console.log(JSON.stringify(body_Obj));
+                    callback('0');
+                    return '0';
+                }
+            });
+        }
+        else {
+            callback('1', cni, cbs);
         }
     });
 }
@@ -2132,11 +2138,14 @@ function update_action(request, response, ty, resource_Obj, callback) {
             });
     }
     else if (ty == '3') {
-        update_action_mni('4', resource_Obj[rootnm].ri, resource_Obj[rootnm].mni, function (rsc, cni, cbs) {
+        update_action_mni('4', resource_Obj[rootnm].ri, resource_Obj[rootnm].mni, resource_Obj[rootnm].mbs, function (rsc, cni, cbs) {
             resource_Obj[rootnm].cni = cni;
             resource_Obj[rootnm].cbs = cbs;
             db_sql.update_cnt(resource_Obj[rootnm], function (err, results) {
                 if (!err) {
+                    cbs_cache[resource_Obj[rootnm].ri].st = resource_Obj[rootnm].st;
+                    set_cbs_cache(resource_Obj[rootnm].ri, cbs_cache[resource_Obj[rootnm].ri]);
+
                     callback('1', resource_Obj);
                 }
                 else {
@@ -2812,7 +2821,13 @@ function update_resource(request, response, ty, body_Obj, resource_Obj, callback
             }
         }
 
-        check_acp_update_acpi(request, response, body_Obj, resource_Obj[rootnm].acpi, resource_Obj[rootnm].cr, function (rsc, request, response, body_Obj) {
+        if(body_Obj[rootnm].hasOwnProperty('acpi')) {
+            var updateAcpiList = resource_Obj[rootnm].acpi;
+        }
+        else {
+            updateAcpiList = [];
+        }
+        check_acp_update_acpi(request, response, body_Obj, updateAcpiList, resource_Obj[rootnm].cr, function (rsc, request, response, body_Obj) {
             if (rsc == '0') {
                 body_Obj = {};
                 body_Obj['dbg'] = resultStatusCode['4103'];
@@ -2958,7 +2973,7 @@ exports.update = function (request, response, comm_Obj, body_Obj) {
                 if (rsc == '1') {
                     _this.remove_no_value(request, update_Obj);
 
-                    if (request.query.real != 4) { // realtime, new
+                    if (request.query.real != 4) {
                         sgn.check(request, update_Obj[rootnm], 1);
                     }
 
@@ -2977,11 +2992,17 @@ function delete_action_cni(ri, ty, pi, cs, callback) {
             var cbs = results_cni[0]['cbs'];
             var st = results_cni[0]['st'];
 
-            st = (parseInt(st, 10) + 1).toString();
             cni = (parseInt(cni, 10) - 1).toString();
             cbs = (parseInt(cbs, 10) - parseInt(cs, 10)).toString();
+            st = (parseInt(st, 10) + 1).toString();
 
-            db_sql.update_cni_parent(ty, cni, cbs, st, pi, function (err, results) {
+            cbs_cache[pi].cni = cni;
+            cbs_cache[pi].cbs = cbs;
+            cbs_cache[pi].st = st;
+
+            set_cbs_cache(pi, cbs_cache[pi]);
+
+            db_sql.update_cni_parent(ty, pi, cni, cbs, st, function (err, results) {
                 if (!err) {
                     callback('1', st);
                 }
@@ -3002,7 +3023,7 @@ function delete_action_cni(ri, ty, pi, cs, callback) {
 
 */
 function delete_action_st(ri, ty, pi, callback) {
-    db_sql.select_st_parent(pi, function (err, results_st) {
+    db_sql.select_st(pi, function (err, results_st) {
         if (results_st.length == 1) {
             var st = results_st[0]['st'];
             st = (parseInt(st, 10) + 1).toString();
@@ -3122,7 +3143,7 @@ exports.delete = function (request, response, comm_Obj) {
             if (rsc == '1') {
                 _this.remove_no_value(request, delete_Obj);
 
-                if (request.query.real != 4) { // realtime, new
+                if (request.query.real != 4) {
                     sgn.check(request, delete_Obj[rootnm], 4);
                 }
 
